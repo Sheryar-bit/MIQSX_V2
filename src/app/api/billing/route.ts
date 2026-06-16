@@ -52,6 +52,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // SECURITY: direct client-driven plan changes are a free-escalation hole.
+  // Real upgrades must come from the payment gateway webhook (Phase 2).
+  // This self-service path is allowed only when ALLOW_DEV_PLAN_SWITCH=true (local testing).
+  if (process.env.ALLOW_DEV_PLAN_SWITCH !== "true") {
+    return NextResponse.json(
+      { error: "Plan changes must go through checkout." },
+      { status: 403 }
+    );
+  }
+
   try {
     const { plan } = await req.json() as { plan: UserPlan };
 

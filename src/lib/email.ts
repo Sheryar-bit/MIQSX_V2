@@ -32,6 +32,16 @@ function createTransport() {
 
 const FROM = process.env.EMAIL_FROM ?? "MIQSX <noreply@miqsx.com>";
 
+// Escape user-controlled values before interpolating into email HTML.
+function escapeHtml(input: string): string {
+  return String(input)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // ---------------------------------------------------------------------------
 // Team invite email
 // ---------------------------------------------------------------------------
@@ -66,8 +76,8 @@ export async function sendTeamInviteEmail({
             <div style="background: #0F1117; border: 1px solid #1E2435; border-radius: 12px; padding: 32px; margin-top: 24px;">
               <h2 style="margin-top: 0;">You've been invited!</h2>
               <p>
-                <strong>${inviterName}</strong> has invited you to join their MIQSX workspace
-                as a <strong>${role}</strong>.
+                <strong>${escapeHtml(inviterName)}</strong> has invited you to join their MIQSX workspace
+                as a <strong>${escapeHtml(role)}</strong>.
               </p>
               <p style="color: #94A3B8; font-size: 14px;">
                 This invite expires in 48 hours.
