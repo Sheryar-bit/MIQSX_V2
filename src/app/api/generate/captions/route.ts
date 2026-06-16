@@ -2,14 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { groq, MODELS } from "@/lib/groq";
+import { enforceLimit } from "@/lib/usage";
+import { trackEvent } from "@/lib/analytics";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { topic, platform, brandName, tone, audience, postType } = await req.json();
 
   if (!topic) return NextResponse.json({ error: "Post topic required" }, { status: 400 });
+
+  const limited = await enforceLimit(session.user.id, "captions");
+  if (limited) return limited;
 
   const platformGuide: Record<string, string> = {
     instagram: "Instagram (2200 char max, emojis welcome, 3–5 hashtags)",
@@ -64,6 +69,7 @@ Return ONLY valid JSON, no other text:
     if (!jsonMatch) throw new Error("No JSON in response");
 
     const captions = JSON.parse(jsonMatch[0]);
+    await trackEvent({ userId: session.user.id, feature: "captions", event: "captions.generated", step: 2 });
     return NextResponse.json({ captions });
   } catch (err) {
     console.error("[CAPTIONS]", err);

@@ -6,7 +6,7 @@ import { signOut } from "next-auth/react";
 import {
   LayoutDashboard, Sparkles, Search, Type, Image,
   LogOut, Zap, ChevronRight, PenTool, Globe, Star, ImageIcon,
-  Shield, Users, AlertTriangle, MessageSquare, ClipboardList,
+  Shield, Users, AlertTriangle, MessageSquare, ClipboardList, BarChart2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +36,13 @@ const validateItems = [
 const workflowItems = [
   { href: "/review", label: "Review Board", icon: ClipboardList },
   { href: "/brief", label: "Brief Parser", icon: MessageSquare },
+];
+
+const accountItems = [
+  { href: "/analytics", label: "Analytics", icon: BarChart2 },
+  { href: "/billing", label: "Billing", icon: Zap },
+  { href: "/team", label: "Team", icon: Users },
+  { href: "/profile", label: "Public Profile", icon: Globe },
 ];
 
 function NavItem({ href, label, icon: Icon, exact }: { href: string; label: string; icon: React.ElementType; exact?: boolean }) {
@@ -106,6 +113,14 @@ export function Sidebar() {
           <p className="text-[10px] font-semibold text-text-dim uppercase tracking-widest px-3 mb-2">Workflow</p>
           <div className="space-y-1">
             {workflowItems.map((item) => <NavItem key={item.href} {...item} />)}
+          </div>
+        </div>
+
+        {/* Account section */}
+        <div>
+          <p className="text-[10px] font-semibold text-text-dim uppercase tracking-widest px-3 mb-2">Account</p>
+          <div className="space-y-1">
+            {accountItems.map((item) => <NavItem key={item.href} {...item} />)}
           </div>
         </div>
       </nav>
