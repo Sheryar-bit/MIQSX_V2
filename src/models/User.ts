@@ -1,13 +1,73 @@
-import mongoose, { Schema, model, models } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
-const UserSchema = new Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true, lowercase: true },
-  password: { type: String, required: true, select: false },
-  plan: { type: String, enum: ["free", "pro", "agency"], default: "free" },
-  emailVerified: { type: Date, default: null },
-  image: { type: String, default: null },
-}, { timestamps: true });
+export type UserPlan = "free" | "pro" | "agency";
+export type TeamRole = "owner" | "admin" | "editor" | "viewer";
 
-const User = models.User || model("User", UserSchema);
-export default User;
+export interface ITeamMember {
+  userId: mongoose.Types.ObjectId;
+  role: TeamRole;
+  joinedAt: Date;
+}
+
+export interface IUser extends Document {
+  name: string;
+  email: string;
+  password?: string;
+  plan: UserPlan;
+  planActivatedAt?: Date;
+  planExpiresAt?: Date;
+  emailVerified?: Date;
+  image?: string;
+
+  // Team (owner perspective — members on this account)
+  teamMembers: ITeamMember[];
+
+  // Public brand profile
+  profileSlug?: string;       // e.g. "acme-studio" → /brand/acme-studio
+  profilePublic: boolean;
+  profileBio?: string;
+
+  // Usage counters (reset monthly)
+  usageMonth: string;         // "2026-06" — reset when month changes
+  usageCounts: Record<string, number>; // { logo: 3, captions: 12, ... }
+
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const TeamMemberSchema = new Schema<ITeamMember>(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    role: { type: String, enum: ["owner", "admin", "editor", "viewer"], default: "editor" },
+    joinedAt: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+
+const UserSchema = new Schema<IUser>(
+  {
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    password: { type: String, select: false },
+    plan: { type: String, enum: ["free", "pro", "agency"], default: "free" },
+    planActivatedAt: { type: Date },
+    planExpiresAt: { type: Date },
+    emailVerified: { type: Date },
+    image: { type: String },
+
+    teamMembers: { type: [TeamMemberSchema], default: [] },
+
+    profileSlug: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
+    profilePublic: { type: Boolean, default: false },
+    profileBio: { type: String, maxlength: 300 },
+
+    usageMonth: { type: String, default: "" },
+    usageCounts: { type: Schema.Types.Mixed, default: {} },
+  },
+  { timestamps: true }
+);
+
+UserSchema.index({ email: 1 });
+UserSchema.index({ profileSlug: 1 });
+
+export default mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
