@@ -1,6 +1,10 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
+import { connectDB } from "@/lib/mongoose";
+import User from "@/models/User";
 
+// Dev-only test account — never available in production builds.
 const TEST_USER = {
   id: "507f1f77bcf86cd799439011", // valid ObjectId format — required by Mongoose guards
   name: "Test User",
@@ -24,15 +28,26 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        // Hardcoded test account — remove when MongoDB is set up
+        const email = credentials.email.toLowerCase().trim();
+
+        // Dev-only convenience login — stripped out of production builds.
         if (
-          credentials.email === TEST_USER.email &&
+          process.env.NODE_ENV !== "production" &&
+          email === TEST_USER.email &&
           credentials.password === TEST_USER.password
         ) {
           return { id: TEST_USER.id, email: TEST_USER.email, name: TEST_USER.name };
         }
 
-        return null;
+        // Real users — look up in MongoDB and verify the bcrypt hash.
+        await connectDB();
+        const user = await User.findOne({ email }).select("+password");
+        if (!user?.password) return null;
+
+        const valid = await bcrypt.compare(credentials.password, user.password);
+        if (!valid) return null;
+
+        return { id: user._id.toString(), email: user.email, name: user.name };
       },
     }),
   ],
