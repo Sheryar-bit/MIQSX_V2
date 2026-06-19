@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const falKey = process.env.FAL_KEY;
+  const falKey = process.env.FAL_API_KEY;
   if (!falKey || falKey === "your-fal-api-key-here") {
     return NextResponse.json(
       { error: "FAL_KEY not configured. Get a free key at fal.ai and add it to .env.local" },
