@@ -4,7 +4,7 @@
 > stand. Update the **Status** column and the **Changelog** after each phase.
 
 **Last updated:** 2026-06-19
-**Current phase:** Phase 2 (payments) — next up
+**Current phase:** Phase 2 (payments) — code-only parts done; gateway integration blocked on accounts + Mongo
 
 ---
 
@@ -30,7 +30,7 @@ all 11 AI routes. Phase 0 (security) is complete. The next real work is throttli
 | Feature surface (logo/captions/taglines/imagery/festive/export/guardian/focus-group/stress-test/cultural/audit/brief/moodboard/names/review) | ✅ |
 | Rate limiting (burst/cost-bomb protection) | ✅ |
 | Real payments (Stripe / JazzCash / webhooks) | 🔴 |
-| JWT carries `plan` + re-sync on upgrade | 🔴 |
+| JWT carries `plan` + re-sync on upgrade | ✅ |
 | Team invite **accept** flow (route + page) | 🔴 dead-end |
 | Multi-tenancy (Organization / `requireRole`) | 🔴 |
 | Object storage (images out of data-URLs) | 🔴 |
@@ -68,15 +68,18 @@ Uses Upstash REST when `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` are
 
 ---
 
-## Phase 2 — Payments · ⚪ ~1 week
+## Phase 2 — Payments · 🟡 IN PROGRESS · ~1 week
 
 | # | Item | Status |
 |---|---|---|
-| 1 | Stripe (global) + JazzCash/Easypaisa (PK); MoR (Paddle) for tax | ⚪ |
-| 2 | Webhook-driven plan state → `User.plan`/`planExpiresAt`; delete client POST path | ⚪ |
-| 3 | Put `plan` in JWT + re-sync on upgrade (`src/lib/auth.ts`) | ⚪ |
-| 4 | Billing portal: invoices, cancel, proration | ⚪ |
+| 1 | Stripe (global) + JazzCash/Easypaisa (PK); MoR (Paddle) for tax | 🔴 BLOCKED — needs gateway accounts |
+| 2 | Webhook-driven plan state → `User.plan`/`planExpiresAt`; delete client POST path | 🟡 `activatePlan()` is the single source of truth; webhook route still TODO |
+| 3 | Put `plan` in JWT + re-sync on upgrade (`src/lib/auth.ts`) | ✅ done (jwt/session callbacks + `trigger:"update"` re-sync) |
+| 4 | Billing portal: invoices, cancel, proration | 🔴 BLOCKED — needs gateway |
 
+**Code-only foundation done:** `src/lib/activate-plan.ts` centralizes all plan mutation (the dev billing POST
+now calls it; a real gateway webhook will call the same fn). JWT now carries `plan`; client `update()` re-syncs.
+**Still needed (your action):** choose provider(s) + create accounts, then add a signature-verifying webhook route.
 **Exit:** pay → auto-upgrade → safe downgrade; gateway is the only source of truth.
 
 ---
@@ -139,6 +142,10 @@ Phases 4–5 after revenue. Phase 6 continuous.
 ---
 
 ## Changelog
+- **2026-06-19** — Phase 2 (code-only parts). JWT now carries `plan` with re-sync on client `update()`
+  (`src/lib/auth.ts` + `src/types/next-auth.d.ts`). Added `src/lib/activate-plan.ts` as the single
+  server-side plan-mutation path; billing POST routed through it. Gateway integration (#1, #4) and the
+  webhook route (#2) remain — blocked on payment-provider accounts + Mongo. Typecheck clean.
 - **2026-06-19** — Phase 1 complete. Added burst rate limiting via `src/middleware.ts` +
   `src/lib/rate-limit.ts` (15 req/60s per user/IP on AI endpoints; Upstash REST when configured,
   in-memory fallback otherwise). Confirmed usage UI (`/analytics` bars, `/billing` plan grid) already done.
