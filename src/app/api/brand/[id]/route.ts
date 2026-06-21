@@ -16,17 +16,46 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   return NextResponse.json({ brand });
 }
 
+// Fields a client is allowed to update. Anything else (userId, _id, timestamps)
+// is dropped to prevent mass-assignment / ownership reassignment.
+const UPDATABLE_FIELDS = [
+  "name",
+  "industry",
+  "description",
+  "website",
+  "status",
+  "dna",
+  "chatHistory",
+  "onboardingStep",
+  "onboardingComplete",
+  "generatedNames",
+  "moodboardAssets",
+  "auditScore",
+  "auditViolations",
+  "auditLastRun",
+] as const;
+
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const body = await req.json();
+  const body = (await req.json()) as Record<string, unknown>;
+
+  // Whitelist only — never trust the raw body.
+  const update: Record<string, unknown> = {};
+  for (const key of UPDATABLE_FIELDS) {
+    if (key in body) update[key] = body[key];
+  }
+
+  if (Object.keys(update).length === 0) {
+    return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });
+  }
 
   await connectDB();
   const brand = await Brand.findOneAndUpdate(
     { _id: id, userId: session.user.id },
-    { $set: body },
+    { $set: update },
     { new: true }
   ).lean();
 

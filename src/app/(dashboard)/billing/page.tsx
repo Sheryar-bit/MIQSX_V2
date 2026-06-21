@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { Check, Zap, Star, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ export default function BillingPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
   const [notice, setNotice] = useState("");
+  const { update } = useSession();
 
   function load() {
     fetch("/api/billing")
@@ -40,24 +42,39 @@ export default function BillingPage() {
 
   useEffect(load, []);
 
+  // Handle the return from Stripe Checkout.
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    if (p.get("upgraded")) {
+      setNotice("🎉 Upgrade complete! Your new plan is active.");
+      update?.();
+      load();
+    } else if (p.get("cancelled")) {
+      setNotice("Checkout cancelled — no changes made.");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function choosePlan(plan: string) {
     setBusy(plan);
     setNotice("");
     try {
-      const res = await fetch("/api/billing", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
-      });
-      const d = await res.json();
-      if (res.status === 403) {
-        // Self-service upgrades are gated until the payment gateway is wired (Phase 2)
-        setNotice("Checkout isn't live yet — payment integration is coming soon.");
-      } else if (!res.ok) {
-        setNotice(d.error || "Could not change plan");
+      if (plan === "pro" || plan === "agency") {
+        // Paid plans → Stripe Checkout. Plan state is set by the webhook on success.
+        const res = await fetch("/api/billing/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan }),
+        });
+        const d = await res.json();
+        if (res.ok && d.url) {
+          window.location.href = d.url; // redirect to Stripe
+          return;
+        }
+        setNotice(d.error || "Could not start checkout.");
       } else {
-        setNotice(d.message || "Plan updated");
-        load();
+        // Downgrade to free is handled by cancelling the subscription in the portal.
+        setNotice("To move to Free, cancel your subscription from the billing portal.");
       }
     } catch {
       setNotice("Network error");
@@ -74,9 +91,25 @@ export default function BillingPage() {
     );
   }
 
+  async function openPortal() {
+    setBusy("portal");
+    try {
+      const res = await fetch("/api/billing/portal", { method: "POST" });
+      const d = await res.json();
+      if (res.ok && d.url) window.location.href = d.url;
+      else setNotice(d.error || "Could not open billing portal.");
+    } catch {
+      setNotice("Network error");
+    } finally {
+      setBusy("");
+    }
+  }
+
   if (error || !data) {
     return <div className="p-8 text-center text-error">{error || "Something went wrong"}</div>;
   }
+
+  const onPaidPlan = data.current.plan === "pro" || data.current.plan === "agency";
 
   return (
     <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-8">
@@ -90,6 +123,16 @@ export default function BillingPage() {
 
       {notice && (
         <div className="rounded-xl border border-border bg-surface-2 px-4 py-3 text-sm text-text">{notice}</div>
+      )}
+
+      {onPaidPlan && (
+        <button
+          onClick={openPortal}
+          disabled={busy === "portal"}
+          className="text-sm text-primary-light hover:underline disabled:opacity-50"
+        >
+          {busy === "portal" ? "Opening…" : "Manage subscription, invoices & cancellation →"}
+        </button>
       )}
 
       <div className="grid md:grid-cols-3 gap-5">
