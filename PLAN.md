@@ -4,7 +4,7 @@
 > stand. Update the **Status** column and the **Changelog** after each phase.
 
 **Last updated:** 2026-06-19
-**Current phase:** Phase 3 (multi-tenancy). Mongo connected ✓. Stripe (Pro+Agency) built — needs dashboard keys/prices to go live.
+**Current phase:** Phase 3 (Organization model — pending team decision). Phases 4–5 hardening largely done; remaining items blocked on accounts (R2/Upstash/Sentry) or the team's data-model call.
 
 ---
 
@@ -34,10 +34,37 @@ all 11 AI routes. Phase 0 (security) is complete. The next real work is throttli
 | MongoDB Atlas connected | ✅ |
 | JWT carries `plan` + re-sync on upgrade | ✅ |
 | Team invite **accept** flow (route + page) | ✅ |
-| Multi-tenancy (Organization / `requireRole`) | 🔴 |
-| Object storage (images out of data-URLs) | 🔴 |
-| Async AI job queue | 🔴 |
-| Observability / CSP / tests / CI | 🔴 |
+| IDOR / mass-assignment fixes (brand + review routes) | ✅ |
+| DB resilience (timeouts, pool, `/api/health`) | ✅ |
+| Security headers + CSP + locked image hosts | ✅ |
+| Email verification + password reset | ✅ |
+| Analytics TTL + nightly rollup | ✅ |
+| Plan-gated image model quality | ✅ |
+| Tests (Vitest) + CI (GitHub Actions) | ✅ |
+| Multi-tenancy (Organization / `requireRole`) | 🔴 team decision |
+| Object storage (images out of data-URLs) | 🔴 needs R2/Cloudinary |
+| Async AI job queue | 🔴 needs QStash |
+| Redis caching | 🔴 needs Upstash |
+| Observability (Sentry/pino/PostHog), OAuth/2FA | 🔴 |
+
+---
+
+## ✅ Shipped & working (code complete, typecheck clean)
+
+- **Auth** — DB-backed login/register with bcrypt; test login dev-only (backdoor closed).
+- **Plan limits** — `enforceLimit()` returns 429 over quota on all 11 AI routes; monthly usage counters via `trackEvent`.
+- **Rate limiting** — 15 req/60s per user/IP on AI endpoints (`middleware.ts`); Upstash-ready, in-memory fallback.
+- **Usage UI** — `/analytics` "X of Y used" bars; `/billing` plan grid.
+- **Stripe billing (Pro + Agency)** — Checkout, signature-verified webhook → single `activatePlan()` path, hosted
+  customer portal. *Code done — needs dashboard keys/prices to go live (see "Stripe handoff" below).*
+- **JWT plan** — `session.user.plan` everywhere; re-syncs on upgrade.
+- **Team invites** — send + accept flow (`/team/accept/[token]`) with seat-limit/self-accept/duplicate guards.
+- **MongoDB Atlas** — connected & verified (db `miqsx`).
+- **IDOR fix** — `brand/[id]` PATCH whitelists fields (no ownership reassignment).
+- **Feature surface** — logo, captions, taglines, imagery, festive, export, guardian, focus-group, stress-test,
+  cultural, audit, brief, moodboard, names, review board + public approval.
+- **Hardening** — DB resilience + `/api/health`; security headers/CSP + locked image hosts; email verification +
+  password reset; analytics TTL + nightly rollup; plan-gated image model; IDOR fixes; Vitest + CI.
 
 ---
 
@@ -96,7 +123,7 @@ User, billing page redirects to Stripe and re-syncs the session on return. Webho
 | 1 | Introduce `Organization` model; brands/reviews/analytics keyed by `orgId` | ⚪ pending team decision on data model |
 | 2 | `requireRole()` guard replacing hardcoded `{ userId }` (e.g. `api/brand/[id]`) | ⚪ depends on #1 |
 | 3 | Finish invite flow — `/team/accept/[token]` page + accept route | ✅ done |
-| 4 | Fix IDOR / mass-assignment — scope writes by tenant + whitelist bodies | 🟡 `brand/[id]` PATCH whitelisted; full sweep pending |
+| 4 | Fix IDOR / mass-assignment — scope writes by tenant + whitelist bodies | ✅ `brand/[id]` + `review/[id]` + `review` PATCH scoped by owner + whitelisted |
 
 **Done now:** invite accept route (`/api/team/invite/[token]`) + page (`/team/accept/[token]`) using existing
 `User.teamMembers` model; seat-limit re-checked at accept; self-accept/duplicate guards. Login + signup now
@@ -107,32 +134,42 @@ keyed by org/owner instead of `userId`) lands — that's the architectural decis
 
 ---
 
-## Phase 4 — Scale · ⚪ ~1.5 weeks
+## Phase 4 — Scale · 🟡 PARTIAL · ~1.5 weeks
 
 | # | Item | Status |
 |---|---|---|
-| 1 | Object storage (R2/Cloudinary) — images out of DB/data-URLs | ⚪ |
-| 2 | Async AI via queue (QStash/BullMQ) → `202 + jobId`, poll | ⚪ |
-| 3 | Analytics rollup — TTL index + nightly rollup; fewer aggregations/load | ⚪ |
-| 4 | Redis caching (plan/profile/dashboard) + DB resilience (`/api/health`) | ⚪ |
+| 1 | Object storage (R2/Cloudinary) — images out of DB/data-URLs | 🔴 needs account |
+| 2 | Async AI via queue (QStash/BullMQ) → `202 + jobId`, poll | 🔴 needs QStash |
+| 3 | Analytics rollup — TTL index + nightly rollup; fewer aggregations/load | ✅ TTL (90d) + `AnalyticsRollup` + `/api/cron/rollup` + `vercel.json` cron |
+| 4 | DB resilience (`/api/health`, timeouts, pool) · Redis caching | 🟡 resilience ✅; Redis caching needs Upstash |
 
+**Note:** rollup infra is built (model + nightly cron + TTL). Wiring the dashboard to *read* rollups instead of raw
+aggregations is a follow-up (left as-is to avoid regressing the working analytics).
 **Exit:** heavy generations don't time out; dashboard stays fast at scale.
 
 ---
 
-## Phase 5 — Harden & observe · ⚪ ~1 week
+## Phase 5 — Harden & observe · 🟡 PARTIAL · ~1 week
 
-Sentry + pino + PostHog · CSP via `middleware.ts` · lock `next.config` image hosts (no `**`) ·
-email verification / password reset / OAuth · Vitest on **auth, limits, tenancy** + GitHub Actions + staging.
+| # | Item | Status |
+|---|---|---|
+| 1 | Security headers + CSP + locked image hosts (`next.config.ts`) | ✅ |
+| 2 | Email verification + password reset (no user-enumeration on reset) | ✅ |
+| 3 | Tests (Vitest: plans, rate-limit, stripe) + GitHub Actions CI | ✅ 10 tests, typecheck + test in CI |
+| 4 | Observability — Sentry + pino + PostHog | 🔴 needs accounts |
+| 5 | OAuth + optional 2FA + staging env | 🔴 |
 
+**Built:** CSP/security headers, `/auth/verify` + `/auth/forgot-password` + `/auth/reset-password` flows
+(hashed single-use tokens, TTL auto-purge), verification email on register, `npm run typecheck`/`test`, CI workflow.
 **Exit:** regressions caught in CI; prod errors page you.
 
 ---
 
-## Phase 6 — Moat · ⚪ ongoing
+## Phase 6 — Moat · 🟡 ongoing
 
 Brand governance as headline (Guardian/Focus-Group/Stress-Test/Cultural-Check → compliance score on every asset) ·
-agency white-label · PKR pricing + local rails · plan-gated model quality (free→FLUX schnell, pro→FLUX dev, agency→Recraft/Ideogram).
+agency white-label · PKR pricing + local rails ·
+**plan-gated model quality ✅** (free→FLUX schnell, pro/agency→FLUX dev; `generate/imagery`).
 
 ---
 
@@ -151,7 +188,40 @@ Phases 4–5 after revenue. Phase 6 continuous.
 
 ---
 
+## Stripe handoff — what to get back from whoever sets it up
+
+The code is done. To switch it on, someone with Stripe dashboard access must create the account/products
+and send back **4 values** + flip **1 setting**. Paste the 4 values into `.env`, restart, and billing is live.
+
+**Send me back these 4 values:**
+| `.env` key | What it is | Looks like |
+|---|---|---|
+| `STRIPE_SECRET_KEY` | Secret API key (Developers → API keys) | `sk_test_...` / `sk_live_...` |
+| `STRIPE_PRICE_PRO` | Price ID of the **Pro** product (monthly recurring) | `price_...` |
+| `STRIPE_PRICE_AGENCY` | Price ID of the **Agency** product (monthly recurring) | `price_...` |
+| `STRIPE_WEBHOOK_SECRET` | Signing secret of the webhook endpoint | `whsec_...` |
+
+**Also have them do:** Settings → Billing → **Customer portal → Activate** (enables cancel/invoices button).
+
+**Webhook endpoint they must register** (Developers → Webhooks → Add endpoint):
+- URL: `https://<our-deployed-domain>/api/webhooks/stripe` (for local testing instead: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`)
+- Events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`
+- The endpoint's signing secret = the `STRIPE_WEBHOOK_SECRET` above.
+
+**Not needed:** publishable key (we redirect to Stripe-hosted Checkout, no client-side Stripe SDK).
+Products: **MIQSX Pro** (PKR 2,999 / ~USD 11, monthly) and **MIQSX Agency** (PKR 7,999 / ~USD 29, monthly).
+
+---
+
 ## Changelog
+- **2026-06-19** — Hardening batch (all "buildable now" items). **Phase 4/5 partial:** DB resilience
+  (`mongoose` timeouts/pool + `/api/health`); security headers + CSP + locked image hosts (`next.config.ts`);
+  analytics TTL (90d) + `AnalyticsRollup` model + secured `/api/cron/rollup` + `vercel.json` cron; email
+  verification + password reset (`AuthToken` model, hashed single-use tokens, `/auth/verify|forgot-password|
+  reset-password` pages + routes, verification email on register, no user-enumeration); Vitest suite (10 tests:
+  plans, rate-limit, stripe) + GitHub Actions CI. **Phase 3 #4:** IDOR/mass-assignment fixed across `review`
+  routes (owner-scoped + whitelisted). **Phase 6:** plan-gated image model (free→schnell, pro/agency→dev).
+  Typecheck clean, tests green. Remaining blocked on accounts (R2/QStash/Upstash/Sentry) or the Org decision.
 - **2026-06-19** — Mongo + Stripe. Connected MongoDB Atlas (`MONGODB_URI`, db `miqsx`) — verified. Built Stripe
   for Pro + Agency: `src/lib/stripe.ts`, `api/billing/checkout` (subscription Checkout), `api/webhooks/stripe`
   (signature-verified → `activatePlan`), `api/billing/portal` (cancel/invoices). Added `stripeCustomerId`/

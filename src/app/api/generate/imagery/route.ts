@@ -22,6 +22,14 @@ const SIZE_MAP: Record<string, string> = {
   story: "portrait_16_9",
 };
 
+// Plan-gated model quality: free gets fast FLUX schnell; paid tiers get the
+// higher-quality FLUX dev with more inference steps.
+const MODEL_BY_PLAN: Record<string, { endpoint: string; steps: number }> = {
+  free: { endpoint: "fal-ai/flux/schnell", steps: 4 },
+  pro: { endpoint: "fal-ai/flux/dev", steps: 28 },
+  agency: { endpoint: "fal-ai/flux/dev", steps: 35 },
+};
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -50,8 +58,11 @@ export async function POST(req: NextRequest) {
 
   const fullPrompt = `${stylePrefix} ${prompt.trim()}. ${colorHint} ${keywordHint} Professional brand imagery, high quality.`.trim();
 
+  const plan = session.user.plan ?? "free";
+  const model = MODEL_BY_PLAN[plan] ?? MODEL_BY_PLAN.free;
+
   try {
-    const response = await fetch("https://fal.run/fal-ai/flux/schnell", {
+    const response = await fetch(`https://fal.run/${model.endpoint}`, {
       method: "POST",
       headers: {
         Authorization: `Key ${falKey}`,
@@ -60,7 +71,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         prompt: fullPrompt,
         image_size: SIZE_MAP[size] ?? "square_hd",
-        num_inference_steps: 4,
+        num_inference_steps: model.steps,
         num_images: 1,
         enable_safety_checker: true,
       }),
@@ -80,6 +91,7 @@ export async function POST(req: NextRequest) {
       imageUrl,
       prompt: fullPrompt,
       style,
+      model: model.endpoint,
       seed: data.seed,
     });
   } catch (err) {

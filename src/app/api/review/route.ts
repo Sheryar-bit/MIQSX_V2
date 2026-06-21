@@ -53,6 +53,8 @@ export async function PATCH(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const userId = (session.user as { id?: string }).id;
+
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   const action = searchParams.get("action");
@@ -65,8 +67,8 @@ export async function PATCH(req: NextRequest) {
     if (action === "generate-token") {
       const token = randomBytes(32).toString("hex");
       const tokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-      const review = await Review.findByIdAndUpdate(
-        id,
+      const review = await Review.findOneAndUpdate(
+        { _id: id, userId },
         { publicToken: token, tokenExpiry, status: "in_review" },
         { new: true }
       );
@@ -74,8 +76,17 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ token, review });
     }
 
+    // Whitelist only, scoped to the owner.
     const body = await req.json();
-    const review = await Review.findByIdAndUpdate(id, body, { new: true });
+    const allowed = ["title", "description", "status", "assetType", "assetContent"] as const;
+    const update: Record<string, unknown> = {};
+    for (const key of allowed) {
+      if (key in body) update[key] = body[key];
+    }
+    if (Object.keys(update).length === 0) {
+      return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });
+    }
+    const review = await Review.findOneAndUpdate({ _id: id, userId }, { $set: update }, { new: true });
     if (!review) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ review });
   } catch {
