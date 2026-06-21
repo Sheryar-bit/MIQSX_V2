@@ -26,5 +26,9 @@ const AnalyticsEventSchema = new Schema<IAnalyticsEvent>(
 AnalyticsEventSchema.index({ userId: 1, createdAt: -1 });
 AnalyticsEventSchema.index({ userId: 1, feature: 1 });
 
+// TTL — raw events auto-expire after 90 days. Long-term aggregates live in the
+// AnalyticsRollup collection (built nightly), so history isn't lost.
+AnalyticsEventSchema.index({ createdAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 90 });
+
 export default mongoose.models.AnalyticsEvent ||
   mongoose.model<IAnalyticsEvent>("AnalyticsEvent", AnalyticsEventSchema);

@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { groq, MODELS } from "@/lib/groq";
+import { trackEvent } from "@/lib/analytics";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { conversation } = await req.json();
   if (!conversation || conversation.trim().length < 20) {
@@ -94,5 +95,6 @@ Return a JSON object with this structure:
     return NextResponse.json({ error: "Failed to parse AI response" }, { status: 500 });
   }
 
+  await trackEvent({ userId: session.user.id, feature: "brief", event: "brief.parsed", step: 4 });
   return NextResponse.json(result);
 }

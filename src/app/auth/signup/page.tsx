@@ -42,7 +42,8 @@ export default function SignupPage() {
         password: form.password,
         redirect: false,
       });
-      router.push("/onboarding");
+      const callbackUrl = new URLSearchParams(window.location.search).get("callbackUrl");
+      router.push(callbackUrl || "/onboarding");
     } catch {
       setError("Something went wrong. Try again.");
       setLoading(false);

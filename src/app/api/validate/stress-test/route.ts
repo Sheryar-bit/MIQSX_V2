@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import sharp from "sharp";
+import { enforceLimit } from "@/lib/usage";
+import { trackEvent } from "@/lib/analytics";
 
 function wcagLuminance(r: number, g: number, b: number): number {
   const toLinear = (c: number) => {
@@ -19,10 +21,13 @@ function contrastRatio(l1: number, l2: number): number {
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { imageBase64, mimeType = "image/png" } = await req.json();
   if (!imageBase64) return NextResponse.json({ error: "imageBase64 required" }, { status: 400 });
+
+  const limited = await enforceLimit(session.user.id, "stress-test");
+  if (limited) return limited;
 
   const inputBuffer = Buffer.from(imageBase64, "base64");
   const results: Record<string, string> = {};
@@ -157,6 +162,7 @@ export async function POST(req: NextRequest) {
         : "Logo may be too detailed to read at favicon size — consider a simplified icon variant",
   });
 
+  await trackEvent({ userId: session.user.id, feature: "stress-test", event: "stress-test.run", step: 3 });
   return NextResponse.json({
     meta: { width, height, format },
     results,

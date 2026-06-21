@@ -28,7 +28,8 @@ export default function LoginPage() {
     if (res?.error) {
       setError("Invalid email or password");
     } else {
-      router.push("/dashboard");
+      const callbackUrl = new URLSearchParams(window.location.search).get("callbackUrl");
+      router.push(callbackUrl || "/dashboard");
     }
   }
 
@@ -82,6 +83,12 @@ export default function LoginPage() {
               <ArrowRight className="h-4 w-4" />
             </Button>
           </form>
+
+          <p className="text-center text-sm mt-4">
+            <Link href="/auth/forgot-password" className="text-text-muted hover:text-text">
+              Forgot your password?
+            </Link>
+          </p>
 
           <p className="text-center text-sm text-text-muted mt-6">
             Don&apos;t have an account?{" "}

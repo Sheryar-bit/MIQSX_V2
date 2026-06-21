@@ -16,6 +16,8 @@ export interface IUser extends Document {
   plan: UserPlan;
   planActivatedAt?: Date;
   planExpiresAt?: Date;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
   emailVerified?: Date;
   image?: string;
 
@@ -52,6 +54,8 @@ const UserSchema = new Schema<IUser>(
     plan: { type: String, enum: ["free", "pro", "agency"], default: "free" },
     planActivatedAt: { type: Date },
     planExpiresAt: { type: Date },
+    stripeCustomerId: { type: String, index: true, sparse: true },
+    stripeSubscriptionId: { type: String, index: true, sparse: true },
     emailVerified: { type: Date },
     image: { type: String },
 

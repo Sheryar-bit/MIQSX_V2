@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/mongoose";
 import User from "@/models/User";
 import { PLANS, UserPlan } from "@/lib/plans";
+import { activatePlan } from "@/lib/activate-plan";
 
 // GET /api/billing — current plan details
 export async function GET() {
@@ -69,31 +70,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
-    await dbConnect();
-
-    const now = new Date();
-    const expiresAt = new Date(now);
-    expiresAt.setMonth(expiresAt.getMonth() + 1); // 30-day billing cycle
-
-    const user = await User.findByIdAndUpdate(
-      session.user.id,
-      {
-        plan,
-        planActivatedAt: now,
-        planExpiresAt: expiresAt,
-      },
-      { new: true }
-    );
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
+    // Single source of truth — same helper a real gateway webhook will call.
+    const result = await activatePlan(session.user.id, plan);
 
     return NextResponse.json({
       ok: true,
-      plan: user.plan,
-      activatedAt: user.planActivatedAt,
-      expiresAt: user.planExpiresAt,
+      plan: result.plan,
+      activatedAt: result.activatedAt,
+      expiresAt: result.expiresAt,
       message: `Plan upgraded to ${PLANS[plan].name}`,
     });
   } catch (err) {

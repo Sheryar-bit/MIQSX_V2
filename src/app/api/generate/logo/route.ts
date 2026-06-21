@@ -4,10 +4,12 @@ import { authOptions } from "@/lib/auth";
 import { composeLogoVariants } from "@/lib/logo-composer";
 import type { IconName, FontId } from "@/lib/svg-icons";
 import type { LogoLayout } from "@/lib/logo-composer";
+import { enforceLimit } from "@/lib/usage";
+import { trackEvent } from "@/lib/analytics";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
   const {
@@ -41,6 +43,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ svg, layout });
   }
 
+  const limited = await enforceLimit(session.user.id, "logo");
+  if (limited) return limited;
+
   const variants = composeLogoVariants(cfg);
+  await trackEvent({ userId: session.user.id, feature: "logo", event: "logo.generated", step: 2 });
   return NextResponse.json({ variants });
 }
