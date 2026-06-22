@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "node:path";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -10,7 +11,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://fal.run https://*.fal.ai https://*.upstash.io",
+  "connect-src 'self' https://*.upstash.io",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -30,14 +31,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  images: {
-    // Locked down — only the hosts we actually serve images from.
-    remotePatterns: [
-      { protocol: "https", hostname: "fal.media" },
-      { protocol: "https", hostname: "**.fal.media" },
-      { protocol: "https", hostname: "fal.run" },
-    ],
-  },
+  // Pin the workspace root so Next doesn't walk up into OneDrive / the home
+  // directory (an orphaned package-lock.json lives in C:\Users\alish).
+  outputFileTracingRoot: path.join(__dirname),
   serverExternalPackages: ["mongoose", "node-vibrant"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

@@ -17,7 +17,7 @@ export default function FestivePage() {
   const [brandName, setBrandName] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#7C3AED");
   const [selected, setSelected] = useState<string>("eid");
-  const [svg, setSvg] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -25,6 +25,7 @@ export default function FestivePage() {
     if (!brandName.trim()) return;
     setLoading(true);
     setError("");
+    setImageUrl(null);
 
     try {
       const res = await fetch("/api/generate/festive", {
@@ -34,20 +35,11 @@ export default function FestivePage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setSvg(data.svg);
+      setImageUrl(data.imageUrl);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Generation failed");
     }
     setLoading(false);
-  }
-
-  function downloadSvg() {
-    if (!svg) return;
-    const blob = new Blob([svg], { type: "image/svg+xml" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `festive-${selected}.svg`;
-    a.click();
   }
 
   return (
@@ -57,7 +49,7 @@ export default function FestivePage() {
         <div>
           <h1 className="text-3xl font-bold text-text">Festive Variants</h1>
           <p className="text-text-muted text-sm mt-0.5">
-            Seasonal logo variants for Eid, Ramadan, 14 August — brand identity stays intact
+            AI festive posters for Eid, Ramadan, 14 August & New Year — FLUX on Cloudflare Workers AI
           </p>
         </div>
       </div>
@@ -124,34 +116,32 @@ export default function FestivePage() {
 
           <Button onClick={generate} loading={loading} disabled={!brandName.trim()} className="w-full" size="lg">
             <Star className="h-4 w-4" />
-            {loading ? "Generating variant..." : "Generate festive variant"}
+            {loading ? "Generating with FLUX..." : "Generate festive poster"}
           </Button>
         </div>
 
         {/* Preview */}
         <div>
-          {svg ? (
+          {imageUrl ? (
             <div className="rounded-2xl border border-border overflow-hidden">
-              <div
-                className="w-full bg-gray-50"
-                dangerouslySetInnerHTML={{ __html: svg }}
-                style={{ aspectRatio: "1 / 1" }}
-              />
+              <img src={imageUrl} alt={`${selected} festive poster`} className="w-full" />
               <div className="p-4 bg-surface flex justify-between items-center">
                 <span className="text-xs text-text-dim capitalize">
                   {FESTIVALS.find((f) => f.id === selected)?.label}
                 </span>
-                <Button size="sm" variant="outline" onClick={downloadSvg}>
-                  <Download className="h-3.5 w-3.5" />
-                  Download SVG
-                </Button>
+                <a href={imageUrl} download={`festive-${selected}.png`} target="_blank" rel="noopener noreferrer">
+                  <Button size="sm" variant="outline">
+                    <Download className="h-3.5 w-3.5" />
+                    Download
+                  </Button>
+                </a>
               </div>
             </div>
           ) : (
             <div className="rounded-2xl border border-dashed border-border min-h-[400px] flex items-center justify-center">
               <div className="text-center">
                 <Star className="h-14 w-14 text-text-dim mx-auto mb-3" />
-                <p className="text-text-muted text-sm">Festive variant preview</p>
+                <p className="text-text-muted text-sm">Festive poster preview</p>
                 <p className="text-xs text-text-dim mt-1">Enter brand name and pick a festival</p>
               </div>
             </div>

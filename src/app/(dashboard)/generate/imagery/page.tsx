@@ -98,7 +98,7 @@ export default function ImageryPage() {
         <ImageIcon className="h-6 w-6 text-blue-400" />
         <div>
           <h1 className="text-3xl font-bold text-text">Post Imagery</h1>
-          <p className="text-text-muted text-sm mt-0.5">FLUX AI generation with 8 style filters · Brand DNA auto-injected</p>
+          <p className="text-text-muted text-sm mt-0.5">FLUX.1 on Cloudflare Workers AI · 8 style filters · Brand DNA auto-injected</p>
         </div>
       </div>
 
@@ -108,11 +108,15 @@ export default function ImageryPage() {
           <div className="rounded-2xl border border-border bg-surface p-6 space-y-4">
             <Textarea
               label="Describe the image *"
-              placeholder="e.g. A cozy Lahore café corner with golden afternoon light, wooden tables, and fresh flowers"
+              placeholder={'e.g. A bold café poster with the headline text "MORNING BREW" above a steaming latte'}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               className="min-h-[90px]"
             />
+            <p className="text-xs text-text-dim -mt-2">
+              💡 Want text on a poster? Put the exact words in quotes — e.g. a sign that says{" "}
+              <span className="text-text-muted">&quot;GRAND OPENING&quot;</span>. Keep it short (1–4 words) for the sharpest letters.
+            </p>
 
             {/* Style filter */}
             <div>
@@ -166,7 +170,7 @@ export default function ImageryPage() {
 
             <Button onClick={generate} loading={loading} disabled={!prompt.trim()} className="w-full" size="lg">
               <Sparkles className="h-4 w-4" />
-              {loading ? "Generating with FLUX..." : "Generate image"}
+              {loading ? "Generating with Workers AI..." : "Generate image"}
             </Button>
           </div>
 
@@ -213,7 +217,7 @@ export default function ImageryPage() {
               <img src={imageUrl} alt="Generated" className="w-full" />
               <div className="p-4 bg-surface flex justify-between items-center">
                 <span className="text-xs text-text-dim capitalize">{style} · {size}</span>
-                <a href={imageUrl} download="generated.jpg" target="_blank" rel="noopener noreferrer">
+                <a href={imageUrl} download="generated.png" target="_blank" rel="noopener noreferrer">
                   <Button size="sm" variant="outline">
                     <Download className="h-3.5 w-3.5" />
                     Download
@@ -226,7 +230,7 @@ export default function ImageryPage() {
               <div className="text-center">
                 <ImageIcon className="h-14 w-14 text-text-dim mx-auto mb-3" />
                 <p className="text-text-muted text-sm">Your generated image will appear here</p>
-                <p className="text-xs text-text-dim mt-1">Requires FAL_KEY in .env.local</p>
+                <p className="text-xs text-text-dim mt-1">Requires Cloudflare Workers AI keys in .env.local</p>
               </div>
             </div>
           )}
