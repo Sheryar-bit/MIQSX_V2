@@ -5,6 +5,7 @@ export type InviteStatus = "pending" | "accepted" | "expired" | "cancelled";
 
 export interface ITeamInvite extends Document {
   invitedBy: mongoose.Types.ObjectId;   // User who sent the invite
+  orgId?: mongoose.Types.ObjectId;       // Organization the invite grants access to
   email: string;                         // Invitee's email
   role: InviteRole;
   token: string;                         // 64-char hex, unique
@@ -19,6 +20,7 @@ export interface ITeamInvite extends Document {
 const TeamInviteSchema = new Schema<ITeamInvite>(
   {
     invitedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    orgId: { type: Schema.Types.ObjectId, ref: "Organization", index: true },
     email: { type: String, required: true, lowercase: true, trim: true },
     role: { type: String, enum: ["editor", "viewer", "admin"], default: "editor" },
     token: { type: String, required: true, unique: true },

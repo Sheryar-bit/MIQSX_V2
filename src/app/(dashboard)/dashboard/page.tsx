@@ -1,8 +1,9 @@
 import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
 import Brand from "@/models/Brand";
-import { Types } from "mongoose";
+import { getOrgContext } from "@/lib/org-context";
 import Link from "next/link";
 import { Plus, Sparkles, Search, Type, Image, ArrowRight, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,11 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate, scoreColor } from "@/lib/utils";
 import type { Brand as BrandType } from "@/types/brand";
 
-async function getBrands(userId: string): Promise<BrandType[]> {
-  if (!Types.ObjectId.isValid(userId)) return [];
+async function getBrands(orgId: string, userId: string): Promise<BrandType[]> {
   try {
     await connectDB();
-    return Brand.find({ userId }).sort({ updatedAt: -1 }).lean() as unknown as BrandType[];
+    return Brand.find({
+      $or: [{ orgId }, { userId, orgId: { $exists: false } }],
+    })
+      .sort({ updatedAt: -1 })
+      .lean() as unknown as BrandType[];
   } catch {
     return [];
   }
@@ -22,7 +26,10 @@ async function getBrands(userId: string): Promise<BrandType[]> {
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
-  const brands = await getBrands(session!.user!.id!);
+  if (!session?.user?.id) redirect("/auth/login");
+
+  const ctx = await getOrgContext(session);
+  const brands = ctx ? await getBrands(ctx.orgId, session.user.id) : [];
 
   const quickActions = [
     { href: "/onboarding", icon: Sparkles, label: "New Brand", desc: "Start with AI interview" },

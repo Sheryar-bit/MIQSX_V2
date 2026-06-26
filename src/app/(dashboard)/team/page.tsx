@@ -76,6 +76,24 @@ export default function TeamPage() {
     }
   }
 
+  async function changeRole(userId: string, role: string) {
+    await fetch("/api/team/members", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, role }),
+    });
+    load();
+  }
+
+  async function removeMember(userId: string) {
+    await fetch("/api/team/members", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+    load();
+  }
+
   return (
     <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-8">
       <div>
@@ -171,9 +189,31 @@ export default function TeamPage() {
                   <p className="text-text text-sm">{m.name}</p>
                   <p className="text-text-dim text-xs">{m.email}</p>
                 </div>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary-light border border-primary/20 capitalize">
-                  {m.role}
-                </span>
+                {m.role === "owner" ? (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary-light border border-primary/20 capitalize">
+                    owner
+                  </span>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={m.role}
+                      onChange={(e) => changeRole(m.userId, e.target.value)}
+                      className="h-8 rounded-lg border border-border bg-surface px-2 text-xs text-text focus:outline-none focus:border-primary capitalize"
+                    >
+                      {["admin", "editor", "viewer"].map((r) => (
+                        <option key={r} value={r} className="bg-surface capitalize">
+                          {r}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => removeMember(m.userId)}
+                      className="text-xs text-error hover:underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

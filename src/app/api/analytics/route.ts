@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getUserAnalytics } from "@/lib/analytics";
-import dbConnect from "@/lib/mongoose";
-import User from "@/models/User";
+import { getOrgAnalytics, trackEvent } from "@/lib/analytics";
+import { getOrgContext } from "@/lib/org-context";
 import { PLANS, currentMonth } from "@/lib/plans";
 
 export async function GET() {
@@ -13,33 +12,26 @@ export async function GET() {
   }
 
   try {
-    await dbConnect();
+    const ctx = await getOrgContext(session);
+    if (!ctx) return NextResponse.json({ error: "No workspace" }, { status: 404 });
 
-    const [user, analytics] = await Promise.all([
-      User.findById(session.user.id),
-      getUserAnalytics(session.user.id),
-    ]);
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
+    const org = ctx.org;
+    const analytics = await getOrgAnalytics(ctx.orgId);
 
     // Reset usage counts if month changed
     const month = currentMonth();
-    let usageCounts = user.usageCounts ?? {};
-    if (user.usageMonth !== month) {
-      usageCounts = {};
-    }
+    let usageCounts = org.usageCounts ?? {};
+    if (org.usageMonth !== month) usageCounts = {};
 
-    const plan = PLANS[user.plan as keyof typeof PLANS] ?? PLANS.free;
+    const plan = PLANS[org.plan as keyof typeof PLANS] ?? PLANS.free;
 
     return NextResponse.json({
       user: {
-        name: user.name,
-        email: user.email,
-        plan: user.plan,
-        planActivatedAt: user.planActivatedAt,
-        planExpiresAt: user.planExpiresAt,
+        name: session.user.name,
+        email: session.user.email,
+        plan: org.plan,
+        planActivatedAt: org.planActivatedAt,
+        planExpiresAt: org.planExpiresAt,
       },
       plan: {
         id: plan.id,
@@ -71,10 +63,11 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { trackEvent } = await import("@/lib/analytics");
+    const ctx = await getOrgContext(session);
 
     await trackEvent({
       userId: session.user.id,
+      orgId: ctx?.orgId,
       brandId: body.brandId,
       event: body.event,
       feature: body.feature,

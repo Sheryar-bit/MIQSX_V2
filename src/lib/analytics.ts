@@ -1,11 +1,12 @@
 import mongoose from "mongoose";
 import dbConnect from "./mongoose";
 import AnalyticsEvent from "../models/Analytics";
-import User from "../models/User";
+import Organization from "../models/Organization";
 import { currentMonth } from "./plans";
 
 export interface TrackOptions {
   userId: string;
+  orgId?: string;
   brandId?: string;
   event: string;       // dot-notation e.g. "logo.generated"
   feature: string;     // short key e.g. "logo"
@@ -50,6 +51,7 @@ export async function trackEvent(opts: TrackOptions): Promise<void> {
     // Insert analytics event
     await AnalyticsEvent.create({
       userId: new mongoose.Types.ObjectId(opts.userId),
+      orgId: opts.orgId ? new mongoose.Types.ObjectId(opts.orgId) : undefined,
       brandId: opts.brandId ? new mongoose.Types.ObjectId(opts.brandId) : undefined,
       event: opts.event,
       feature: opts.feature,
@@ -57,36 +59,38 @@ export async function trackEvent(opts: TrackOptions): Promise<void> {
       metadata: opts.metadata,
     });
 
-    // Increment monthly usage counter on User
-    const month = currentMonth();
-    await User.updateOne(
-      { _id: new mongoose.Types.ObjectId(opts.userId) },
-      [
-        {
-          $set: {
-            // Reset counts if month changed
-            usageCounts: {
-              $cond: {
-                if: { $eq: ["$usageMonth", month] },
-                then: "$usageCounts",
-                else: {},
+    // Increment the monthly usage counter on the ORGANIZATION (quota is per-workspace).
+    if (opts.orgId) {
+      const month = currentMonth();
+      await Organization.updateOne(
+        { _id: new mongoose.Types.ObjectId(opts.orgId) },
+        [
+          {
+            $set: {
+              // Reset counts if month changed
+              usageCounts: {
+                $cond: {
+                  if: { $eq: ["$usageMonth", month] },
+                  then: "$usageCounts",
+                  else: {},
+                },
+              },
+              usageMonth: month,
+            },
+          },
+          {
+            $set: {
+              [`usageCounts.${opts.feature}`]: {
+                $add: [
+                  { $ifNull: [`$usageCounts.${opts.feature}`, 0] },
+                  1,
+                ],
               },
             },
-            usageMonth: month,
           },
-        },
-        {
-          $set: {
-            [`usageCounts.${opts.feature}`]: {
-              $add: [
-                { $ifNull: [`$usageCounts.${opts.feature}`, 0] },
-                1,
-              ],
-            },
-          },
-        },
-      ]
-    );
+        ]
+      );
+    }
   } catch (err) {
     // Silent — never break the caller
     console.error("[analytics] trackEvent failed:", err);
@@ -94,32 +98,32 @@ export async function trackEvent(opts: TrackOptions): Promise<void> {
 }
 
 /**
- * Get aggregated analytics for a user.
+ * Get aggregated analytics for an organization (workspace).
  */
-export async function getUserAnalytics(userId: string) {
+export async function getOrgAnalytics(orgId: string) {
   await dbConnect();
 
-  const uid = new mongoose.Types.ObjectId(userId);
+  const oid = new mongoose.Types.ObjectId(orgId);
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   const [totalByFeature, last7Days, last30Days, dailyActivity] = await Promise.all([
     // Total usage per feature (all time)
     AnalyticsEvent.aggregate([
-      { $match: { userId: uid } },
+      { $match: { orgId: oid } },
       { $group: { _id: "$feature", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
     ]),
 
     // Events in last 7 days
-    AnalyticsEvent.countDocuments({ userId: uid, createdAt: { $gte: sevenDaysAgo } }),
+    AnalyticsEvent.countDocuments({ orgId: oid, createdAt: { $gte: sevenDaysAgo } }),
 
     // Events in last 30 days
-    AnalyticsEvent.countDocuments({ userId: uid, createdAt: { $gte: thirtyDaysAgo } }),
+    AnalyticsEvent.countDocuments({ orgId: oid, createdAt: { $gte: thirtyDaysAgo } }),
 
     // Daily activity (last 30 days) for sparkline
     AnalyticsEvent.aggregate([
-      { $match: { userId: uid, createdAt: { $gte: thirtyDaysAgo } } },
+      { $match: { orgId: oid, createdAt: { $gte: thirtyDaysAgo } } },
       {
         $group: {
           _id: {

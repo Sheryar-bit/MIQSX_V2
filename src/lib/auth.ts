@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongoose";
 import User from "@/models/User";
+import Membership from "@/models/Membership";
 
 // Dev-only test account — never available in production builds.
 const TEST_USER = {
@@ -52,21 +53,46 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user, trigger, session }) {
       // On sign-in, seed id + plan from the authorized user.
       if (user) {
         token.id = user.id;
         token.plan = user.plan ?? "free";
       }
-      // On an explicit client `update()` (e.g. right after an upgrade),
-      // re-sync the plan from the DB so the token isn't stale.
-      if (trigger === "update" && token.id) {
+
+      // Seed the active workspace once we know the user (oldest membership =
+      // their personal workspace).
+      if (token.id && !token.activeOrgId) {
         try {
           await connectDB();
-          const fresh = await User.findById(token.id).select("plan");
-          if (fresh) token.plan = fresh.plan;
+          const m = await Membership.findOne({ userId: token.id }).sort({ joinedAt: 1 }).select("orgId");
+          if (m) token.activeOrgId = m.orgId.toString();
         } catch {
-          // keep the existing token.plan on a transient DB error
+          /* leave unset on transient error */
+        }
+      }
+
+      if (trigger === "update") {
+        // Switch workspace via update({ activeOrgId }) — only if the user is a member.
+        const requestedOrg = (session as { activeOrgId?: string } | undefined)?.activeOrgId;
+        if (requestedOrg && token.id) {
+          try {
+            await connectDB();
+            const m = await Membership.findOne({ userId: token.id, orgId: requestedOrg });
+            if (m) token.activeOrgId = requestedOrg;
+          } catch {
+            /* ignore */
+          }
+        }
+        // Re-sync plan from the DB (e.g. right after an upgrade).
+        if (token.id) {
+          try {
+            await connectDB();
+            const fresh = await User.findById(token.id).select("plan");
+            if (fresh) token.plan = fresh.plan;
+          } catch {
+            /* keep existing token.plan */
+          }
         }
       }
       return token;
@@ -75,6 +101,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id;
         session.user.plan = token.plan;
+        session.user.activeOrgId = token.activeOrgId;
       }
       return session;
     },

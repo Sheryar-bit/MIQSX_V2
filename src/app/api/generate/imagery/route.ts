@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { enforceLimit } from "@/lib/usage";
+import { enforceOrgLimit } from "@/lib/org-context";
 import { trackEvent } from "@/lib/analytics";
 
 const STYLE_PREFIXES: Record<string, string> = {
@@ -45,8 +45,8 @@ export async function POST(req: NextRequest) {
   const { prompt, style = "realism", brandColors, brandKeywords, size = "square" } = await req.json();
   if (!prompt?.trim()) return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
 
-  const limited = await enforceLimit(session.user.id, "imagery");
-  if (limited) return limited;
+  const gate = await enforceOrgLimit(session, "imagery");
+  if (!gate.ok) return gate.response;
 
   const stylePrefix = STYLE_PREFIXES[style] || STYLE_PREFIXES.realism;
   const colorHint = brandColors?.length
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
     const imageUrl = data.images?.[0]?.url;
     if (!imageUrl) throw new Error("No image in response");
 
-    await trackEvent({ userId: session.user.id, feature: "imagery", event: "imagery.generated", step: 2 });
+    await trackEvent({ userId: session.user.id, orgId: gate.orgId, feature: "imagery", event: "imagery.generated", step: 2 });
     return NextResponse.json({
       imageUrl,
       prompt: fullPrompt,

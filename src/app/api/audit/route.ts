@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { groq, MODELS } from "@/lib/groq";
 import { connectDB } from "@/lib/mongoose";
 import Brand from "@/models/Brand";
-import { enforceLimit } from "@/lib/usage";
+import { enforceOrgLimit } from "@/lib/org-context";
 import { trackEvent } from "@/lib/analytics";
 
 export async function POST(req: NextRequest) {
@@ -20,8 +20,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Please upload at least one image" }, { status: 400 });
     }
 
-    const limited = await enforceLimit(session.user.id, "audit");
-    if (limited) return limited;
+    const gate = await enforceOrgLimit(session, "audit");
+    if (!gate.ok) return gate.response;
 
     await connectDB();
     const brand = await Brand.findOne({ _id: brandId, userId: session.user.id }).lean();
@@ -99,7 +99,7 @@ Return ONLY valid JSON in this exact format:
       });
     }
 
-    await trackEvent({ userId: session.user.id, feature: "audit", event: "audit.run", step: 1, brandId: brandId || undefined });
+    await trackEvent({ userId: session.user.id, orgId: gate.orgId, feature: "audit", event: "audit.run", step: 1, brandId: brandId || undefined });
     return NextResponse.json({ audit: result });
   } catch (err) {
     console.error("[AUDIT]", err);

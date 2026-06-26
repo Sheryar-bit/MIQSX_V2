@@ -1,23 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import dbConnect from "@/lib/mongoose";
-import User from "@/models/User";
+import { requireRole } from "@/lib/org-context";
+import Organization from "@/models/Organization";
 import { getStripe, planToPriceId } from "@/lib/stripe";
 import { UserPlan } from "@/lib/plans";
 
 export const runtime = "nodejs";
 
-// POST /api/billing/checkout — start a Stripe Checkout session for a paid plan.
+// POST /api/billing/checkout — start a Stripe Checkout session for the workspace.
+// Owner-only; the subscription belongs to the Organization.
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const guard = await requireRole(session, "owner");
+  if (!guard.ok) return guard.response;
+
   try {
     const { plan } = (await req.json()) as { plan: UserPlan };
-
     if (plan !== "pro" && plan !== "agency") {
       return NextResponse.json({ error: "Only pro and agency are purchasable." }, { status: 400 });
     }
@@ -30,23 +33,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await dbConnect();
-    const user = await User.findById(session.user.id);
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+    const org = await Organization.findById(guard.ctx.orgId);
+    if (!org) return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
 
     const stripe = getStripe();
 
-    // Reuse or create the Stripe customer for this user.
-    let customerId = user.stripeCustomerId;
+    // Reuse or create the Stripe customer for this workspace.
+    let customerId = org.stripeCustomerId;
     if (!customerId) {
       const customer = await stripe.customers.create({
-        email: user.email,
-        name: user.name,
-        metadata: { userId: user._id.toString() },
+        email: session.user.email ?? undefined,
+        name: org.name,
+        metadata: { orgId: org._id.toString() },
       });
       customerId = customer.id;
-      user.stripeCustomerId = customerId;
-      await user.save();
+      org.stripeCustomerId = customerId;
+      await org.save();
     }
 
     const appUrl = process.env.APP_URL ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000";
@@ -55,10 +57,8 @@ export async function POST(req: NextRequest) {
       mode: "subscription",
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
-      // Metadata on BOTH the session and the subscription so the webhook can
-      // resolve the user on every lifecycle event.
-      metadata: { userId: user._id.toString(), plan },
-      subscription_data: { metadata: { userId: user._id.toString(), plan } },
+      metadata: { orgId: org._id.toString(), plan },
+      subscription_data: { metadata: { orgId: org._id.toString(), plan } },
       success_url: `${appUrl}/billing?upgraded=1`,
       cancel_url: `${appUrl}/billing?cancelled=1`,
       allow_promotion_codes: true,

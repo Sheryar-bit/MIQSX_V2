@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { groq, MODELS } from "@/lib/groq";
-import { enforceLimit } from "@/lib/usage";
+import { enforceOrgLimit } from "@/lib/org-context";
 import { trackEvent } from "@/lib/analytics";
 
 export async function POST(req: NextRequest) {
@@ -13,8 +13,8 @@ export async function POST(req: NextRequest) {
 
   if (!brandName) return NextResponse.json({ error: "Brand name required" }, { status: 400 });
 
-  const limited = await enforceLimit(session.user.id, "taglines");
-  if (limited) return limited;
+  const gate = await enforceOrgLimit(session, "taglines");
+  if (!gate.ok) return gate.response;
 
   const prompt = `You are a world-class brand copywriter. Generate ${count} distinct taglines for this brand.
 
@@ -50,7 +50,7 @@ Return ONLY a JSON array, no other text:
     if (!jsonMatch) throw new Error("No JSON in response");
 
     const taglines = JSON.parse(jsonMatch[0]);
-    await trackEvent({ userId: session.user.id, feature: "taglines", event: "taglines.generated", step: 2 });
+    await trackEvent({ userId: session.user.id, orgId: gate.orgId, feature: "taglines", event: "taglines.generated", step: 2 });
     return NextResponse.json({ taglines });
   } catch (err) {
     console.error("[TAGLINES]", err);

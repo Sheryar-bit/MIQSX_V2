@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface IAnalyticsEvent extends Document {
   userId: mongoose.Types.ObjectId;
+  orgId?: mongoose.Types.ObjectId;
   brandId?: mongoose.Types.ObjectId;
   event: string;          // e.g. "logo.generated", "caption.generated", "guardian.run"
   feature: string;        // e.g. "logo", "captions", "guardian"
@@ -13,6 +14,7 @@ export interface IAnalyticsEvent extends Document {
 const AnalyticsEventSchema = new Schema<IAnalyticsEvent>(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    orgId: { type: Schema.Types.ObjectId, ref: "Organization", index: true },
     brandId: { type: Schema.Types.ObjectId, ref: "Brand", index: true },
     event: { type: String, required: true },
     feature: { type: String, required: true },

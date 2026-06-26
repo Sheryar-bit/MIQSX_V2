@@ -3,21 +3,24 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
 import Brand from "@/models/Brand";
-import { Types } from "mongoose";
+import { getOrgContext, requireRole } from "@/lib/org-context";
 import { z } from "zod";
-
-function isValidId(id: string) {
-  return Types.ObjectId.isValid(id);
-}
 
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!isValidId(session.user.id)) return NextResponse.json({ brands: [] });
 
   try {
     await connectDB();
-    const brands = await Brand.find({ userId: session.user.id }).sort({ updatedAt: -1 }).lean();
+    const ctx = await getOrgContext(session);
+    if (!ctx) return NextResponse.json({ brands: [] });
+
+    // Scope to the workspace; include the user's own un-migrated brands as a fallback.
+    const brands = await Brand.find({
+      $or: [{ orgId: ctx.orgId }, { userId: session.user.id, orgId: { $exists: false } }],
+    })
+      .sort({ updatedAt: -1 })
+      .lean();
     return NextResponse.json({ brands });
   } catch {
     return NextResponse.json({ brands: [] });
@@ -33,9 +36,9 @@ const createSchema = z.object({
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!isValidId(session.user.id)) {
-    return NextResponse.json({ error: "Connect MongoDB to create brands" }, { status: 400 });
-  }
+
+  const guard = await requireRole(session, "editor");
+  if (!guard.ok) return guard.response;
 
   try {
     const body = await req.json();
@@ -44,6 +47,7 @@ export async function POST(req: NextRequest) {
     await connectDB();
     const brand = await Brand.create({
       userId: session.user.id,
+      orgId: guard.ctx.orgId,
       name,
       industry,
       description,

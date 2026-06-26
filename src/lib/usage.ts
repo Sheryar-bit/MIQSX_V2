@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import dbConnect from "./mongoose";
-import User from "../models/User";
+import Organization from "../models/Organization";
 import {
   PLANS,
   UserPlan,
@@ -18,17 +18,17 @@ export interface UsageStatus {
 }
 
 /**
- * Read a user's current monthly usage for a feature, accounting for the
- * month-reset (counts only count if usageMonth matches the current month).
+ * Read an organization's current monthly usage for a feature, accounting for the
+ * month-reset (counts only apply if usageMonth matches the current month).
  */
-export async function checkUsage(userId: string, feature: string): Promise<UsageStatus> {
+export async function checkUsage(orgId: string, feature: string): Promise<UsageStatus> {
   await dbConnect();
-  const user = await User.findById(userId).select("plan usageMonth usageCounts");
-  const plan = (user?.plan as UserPlan) ?? "free";
+  const org = await Organization.findById(orgId).select("plan usageMonth usageCounts");
+  const plan = (org?.plan as UserPlan) ?? "free";
 
   const month = currentMonth();
   const counts: Record<string, number> =
-    user && user.usageMonth === month ? (user.usageCounts ?? {}) : {};
+    org && org.usageMonth === month ? (org.usageCounts ?? {}) : {};
   const used = counts[feature] ?? 0;
 
   const limitKey = FEATURE_LIMIT_MAP[feature];
@@ -43,14 +43,14 @@ export async function checkUsage(userId: string, feature: string): Promise<Usage
  * Returns a ready-to-send 429 NextResponse if over the limit, or null if allowed.
  *
  * Usage in a route:
- *   const limited = await enforceLimit(session.user.id, "logo");
+ *   const limited = await enforceLimit(ctx.orgId, "logo");
  *   if (limited) return limited;
  */
 export async function enforceLimit(
-  userId: string,
+  orgId: string,
   feature: string
 ): Promise<NextResponse | null> {
-  const status = await checkUsage(userId, feature);
+  const status = await checkUsage(orgId, feature);
   if (status.allowed) return null;
 
   return NextResponse.json(

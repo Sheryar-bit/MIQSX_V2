@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { composeLogoVariants } from "@/lib/logo-composer";
 import type { IconName, FontId } from "@/lib/svg-icons";
 import type { LogoLayout } from "@/lib/logo-composer";
-import { enforceLimit } from "@/lib/usage";
+import { enforceOrgLimit } from "@/lib/org-context";
 import { trackEvent } from "@/lib/analytics";
 
 export async function POST(req: NextRequest) {
@@ -43,10 +43,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ svg, layout });
   }
 
-  const limited = await enforceLimit(session.user.id, "logo");
-  if (limited) return limited;
+  const gate = await enforceOrgLimit(session, "logo");
+  if (!gate.ok) return gate.response;
 
   const variants = composeLogoVariants(cfg);
-  await trackEvent({ userId: session.user.id, feature: "logo", event: "logo.generated", step: 2 });
+  await trackEvent({ userId: session.user.id, orgId: gate.orgId, feature: "logo", event: "logo.generated", step: 2 });
   return NextResponse.json({ variants });
 }
