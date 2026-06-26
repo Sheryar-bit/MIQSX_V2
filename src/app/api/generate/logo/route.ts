@@ -64,8 +64,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const limited = await enforceLimit(session.user.id, "logo");
-    if (limited) return limited;
+    const gate = await enforceOrgLimit(session, "logo");
+    if (!gate.ok) return gate.response;
 
     const logoPrompt = buildLogoPrompt({
       brandName: brandName.trim(),
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await trackEvent({ userId: session.user.id, feature: "logo", event: "logo.ai_generated", step: 2 });
+    await trackEvent({ userId: session.user.id, orgId: gate.orgId, feature: "logo", event: "logo.ai_generated", step: 2 });
     return NextResponse.json({ images, prompt: logoPrompt });
   }
 
