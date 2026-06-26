@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { enforceOrgLimit } from "@/lib/org-context";
 import { trackEvent } from "@/lib/analytics";
+import { generateBrandImage, isCloudflareConfigured, FLUX_MODEL, type ImageSize } from "@/lib/imagegen";
 
 const STYLE_PREFIXES: Record<string, string> = {
   realism: "professional photography, photorealistic, high detail, natural lighting, sharp focus,",
@@ -15,29 +16,16 @@ const STYLE_PREFIXES: Record<string, string> = {
   animated: "2D animation style, cartoon illustration, vibrant bold colors, clean outlines, studio quality,",
 };
 
-const SIZE_MAP: Record<string, string> = {
-  square: "square_hd",
-  landscape: "landscape_4_3",
-  portrait: "portrait_4_3",
-  story: "portrait_16_9",
-};
-
-// Plan-gated model quality: free gets fast FLUX schnell; paid tiers get the
-// higher-quality FLUX dev with more inference steps.
-const MODEL_BY_PLAN: Record<string, { endpoint: string; steps: number }> = {
-  free: { endpoint: "fal-ai/flux/schnell", steps: 4 },
-  pro: { endpoint: "fal-ai/flux/dev", steps: 28 },
-  agency: { endpoint: "fal-ai/flux/dev", steps: 35 },
-};
-
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const falKey = process.env.FAL_KEY;
-  if (!falKey || falKey === "your-fal-api-key-here") {
+  if (!isCloudflareConfigured()) {
     return NextResponse.json(
-      { error: "FAL_KEY not configured. Get a free key at fal.ai and add it to .env.local" },
+      {
+        error:
+          "Cloudflare Workers AI not configured. Add CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN to .env.local",
+      },
       { status: 503 }
     );
   }
@@ -56,43 +44,21 @@ export async function POST(req: NextRequest) {
     ? `Brand style: ${brandKeywords.slice(0, 4).join(", ")}.`
     : "";
 
-  const fullPrompt = `${stylePrefix} ${prompt.trim()}. ${colorHint} ${keywordHint} Professional brand imagery, high quality.`.trim();
+  // Lead with the user's own request so quoted poster text isn't buried behind
+  // the style prefix, then layer style + brand hints as trailing modifiers.
+  const fullPrompt = `${prompt.trim()}. ${stylePrefix} ${colorHint} ${keywordHint} Professional brand imagery, high quality, sharp details.`.trim();
 
   const plan = session.user.plan ?? "free";
-  const model = MODEL_BY_PLAN[plan] ?? MODEL_BY_PLAN.free;
 
   try {
-    const response = await fetch(`https://fal.run/${model.endpoint}`, {
-      method: "POST",
-      headers: {
-        Authorization: `Key ${falKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt: fullPrompt,
-        image_size: SIZE_MAP[size] ?? "square_hd",
-        num_inference_steps: model.steps,
-        num_images: 1,
-        enable_safety_checker: true,
-      }),
-    });
-
-    if (!response.ok) {
-      const err = await response.text();
-      throw new Error(`fal.ai error: ${err}`);
-    }
-
-    const data = await response.json();
-    const imageUrl = data.images?.[0]?.url;
-    if (!imageUrl) throw new Error("No image in response");
+    const imageUrl = await generateBrandImage(fullPrompt, { plan, size: size as ImageSize });
 
     await trackEvent({ userId: session.user.id, orgId: gate.orgId, feature: "imagery", event: "imagery.generated", step: 2 });
     return NextResponse.json({
       imageUrl,
       prompt: fullPrompt,
       style,
-      model: model.endpoint,
-      seed: data.seed,
+      model: FLUX_MODEL,
     });
   } catch (err) {
     console.error("[IMAGERY]", err);

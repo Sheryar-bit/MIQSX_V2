@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { PenTool, Download, RefreshCw, ChevronDown } from "lucide-react";
+import { PenTool, Download, RefreshCw, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { ICON_CATEGORIES, FONT_OPTIONS, type IconName, type FontId } from "@/lib/svg-icons";
 import type { LogoLayout } from "@/lib/logo-composer";
@@ -42,6 +43,7 @@ function SvgPreview({ svg, label }: { svg: string; label: string }) {
 export default function LogoGeneratorPage() {
   const [brandName, setBrandName] = useState("");
   const [tagline, setTagline] = useState("");
+  const [aiPrompt, setAiPrompt] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#7C3AED");
   const [bgColor, setBgColor] = useState("transparent");
   const [selectedIcon, setSelectedIcon] = useState<IconName>("hexagon");
@@ -50,6 +52,9 @@ export default function LogoGeneratorPage() {
   const [variants, setVariants] = useState<Record<string, string> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [aiImages, setAiImages] = useState<string[] | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
 
   async function generate() {
     if (!brandName.trim()) return;
@@ -78,6 +83,35 @@ export default function LogoGeneratorPage() {
     setLoading(false);
   }
 
+  async function generateAi() {
+    if (!brandName.trim()) return;
+    setAiLoading(true);
+    setAiError("");
+    setAiImages(null);
+
+    try {
+      const res = await fetch("/api/generate/logo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "ai",
+          prompt: aiPrompt,
+          brandName,
+          tagline,
+          icon: selectedIcon,
+          primaryColor,
+          bgColor: bgColor === "transparent" ? undefined : bgColor,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setAiImages(data.images);
+    } catch (e: unknown) {
+      setAiError(e instanceof Error ? e.message : "AI generation failed");
+    }
+    setAiLoading(false);
+  }
+
   const displayedVariants = variants
     ? activeLayout === "all"
       ? Object.entries(variants)
@@ -91,7 +125,7 @@ export default function LogoGeneratorPage() {
         <div>
           <h1 className="text-3xl font-bold text-text">Logo Generator</h1>
           <p className="text-text-muted text-sm mt-0.5">
-            Programmatic SVG logos — no raster, no templates. Pure vector, fully exportable.
+            Crisp vector SVG logos — plus AI concepts from FLUX on Cloudflare Workers AI.
           </p>
         </div>
       </div>
@@ -113,6 +147,18 @@ export default function LogoGeneratorPage() {
               value={tagline}
               onChange={(e) => setTagline(e.target.value)}
             />
+            <div>
+              <Textarea
+                label="AI logo prompt (optional)"
+                placeholder={'Describe your ideal logo for AI concepts — e.g. "a minimal geometric fox head inside a hexagon, bold and friendly"'}
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                className="min-h-[70px]"
+              />
+              <p className="text-xs text-text-dim mt-1.5">
+                Guides the <span className="text-text-muted">Generate AI concepts</span> button only. Leave blank to use the selected icon. Vector variants ignore this.
+              </p>
+            </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
@@ -202,16 +248,75 @@ export default function LogoGeneratorPage() {
             <p className="text-sm text-error bg-error/10 border border-error/20 rounded-xl px-4 py-3">{error}</p>
           )}
 
-          <Button onClick={generate} loading={loading} disabled={!brandName.trim()} className="w-full" size="lg">
-            <RefreshCw className="h-4 w-4" />
-            {loading ? "Composing logo..." : "Generate all variants"}
-          </Button>
+          <div className="space-y-2">
+            <Button onClick={generate} loading={loading} disabled={!brandName.trim()} className="w-full" size="lg">
+              <RefreshCw className="h-4 w-4" />
+              {loading ? "Composing logo..." : "Generate vector variants"}
+            </Button>
+            <Button
+              onClick={generateAi}
+              loading={aiLoading}
+              disabled={!brandName.trim()}
+              variant="outline"
+              className="w-full"
+              size="lg"
+            >
+              <Sparkles className="h-4 w-4" />
+              {aiLoading ? "Generating with FLUX..." : "Generate AI concepts"}
+            </Button>
+            {aiError && (
+              <p className="text-sm text-error bg-error/10 border border-error/20 rounded-xl px-4 py-3">{aiError}</p>
+            )}
+          </div>
         </div>
 
         {/* Preview */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 space-y-6">
+          {/* AI concepts (FLUX) */}
+          {(aiImages || aiLoading) && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="h-4 w-4 text-primary-light" />
+                <h3 className="font-semibold text-sm text-text">
+                  AI Concepts <span className="text-text-dim font-normal">· FLUX</span>
+                </h3>
+              </div>
+              {aiLoading && !aiImages ? (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="rounded-2xl border border-border bg-surface-2 aspect-square animate-pulse" />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {aiImages?.map((src, i) => (
+                    <div key={i} className="rounded-2xl border border-border bg-surface-2 overflow-hidden">
+                      <img src={src} alt={`AI logo concept ${i + 1}`} className="w-full bg-white" />
+                      <a
+                        href={src}
+                        download={`logo-ai-${i + 1}.png`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        <Button variant="ghost" size="sm" className="w-full rounded-none">
+                          <Download className="h-3.5 w-3.5" />
+                          Download
+                        </Button>
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-text-dim mt-2">
+                AI concepts are raster ideas — the brand name may not be spelled exactly. Use the vector variants for production.
+              </p>
+            </div>
+          )}
+
+          {/* Vector SVG variants */}
           {variants ? (
-            <>
+            <div>
               {/* Layout filter tabs */}
               <div className="flex gap-2 mb-5 flex-wrap">
                 {(["all", ...LAYOUTS.map((l) => l.id)] as const).map((l) => (
@@ -234,14 +339,17 @@ export default function LogoGeneratorPage() {
                   <SvgPreview key={layout} svg={svg} label={layout} />
                 ))}
               </div>
-            </>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-border h-full min-h-[400px] flex items-center justify-center">
-              <div className="text-center">
-                <PenTool className="h-12 w-12 text-text-dim mx-auto mb-3" />
-                <p className="text-text-muted text-sm">Configure your logo on the left and hit Generate</p>
-              </div>
             </div>
+          ) : (
+            !aiImages &&
+            !aiLoading && (
+              <div className="rounded-2xl border border-dashed border-border h-full min-h-[400px] flex items-center justify-center">
+                <div className="text-center">
+                  <PenTool className="h-12 w-12 text-text-dim mx-auto mb-3" />
+                  <p className="text-text-muted text-sm">Configure your logo on the left and hit Generate</p>
+                </div>
+              </div>
+            )
           )}
         </div>
       </div>

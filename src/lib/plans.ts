@@ -13,6 +13,7 @@ export interface PlanDefinition {
     captionGenerations: number;
     taglineGenerations: number;
     imageryGenerations: number;
+    festiveGenerations: number;
     auditRuns: number;
     guardianRuns: number;
     focusGroupRuns: number;
@@ -36,6 +37,7 @@ export const PLANS: Record<UserPlan, PlanDefinition> = {
       captionGenerations: 10,
       taglineGenerations: 10,
       imageryGenerations: 3,
+      festiveGenerations: 3,
       auditRuns: 3,
       guardianRuns: 5,
       focusGroupRuns: 2,
@@ -65,6 +67,7 @@ export const PLANS: Record<UserPlan, PlanDefinition> = {
       captionGenerations: 100,
       taglineGenerations: 100,
       imageryGenerations: 30,
+      festiveGenerations: 30,
       auditRuns: 30,
       guardianRuns: 50,
       focusGroupRuns: 20,
@@ -98,6 +101,7 @@ export const PLANS: Record<UserPlan, PlanDefinition> = {
       captionGenerations: -1,
       taglineGenerations: -1,
       imageryGenerations: 100,
+      festiveGenerations: 100,
       auditRuns: -1,
       guardianRuns: -1,
       focusGroupRuns: -1,
@@ -125,6 +129,7 @@ export const FEATURE_LIMIT_MAP: Record<string, keyof PlanDefinition["limits"]> =
   captions: "captionGenerations",
   taglines: "taglineGenerations",
   imagery: "imageryGenerations",
+  festive: "festiveGenerations",
   audit: "auditRuns",
   guardian: "guardianRuns",
   "focus-group": "focusGroupRuns",

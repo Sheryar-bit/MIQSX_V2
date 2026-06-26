@@ -26,4 +26,12 @@ describe("plan limits", () => {
   it("allows unknown features (no mapping)", () => {
     expect(isWithinLimit("free", "nonexistent", 1000)).toBe(true);
   });
+
+  it("gates festive (FLUX) generations per plan", () => {
+    expect(isWithinLimit("free", "festive", 2)).toBe(true);
+    expect(isWithinLimit("free", "festive", 3)).toBe(false);
+    expect(PLANS.pro.limits.festiveGenerations).toBe(30);
+    expect(PLANS.agency.limits.festiveGenerations).toBe(100);
+    expect(isWithinLimit("agency", "festive", 50)).toBe(true);
+  });
 });
