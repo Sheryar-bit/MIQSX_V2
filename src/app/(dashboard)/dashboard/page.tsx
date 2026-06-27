@@ -11,14 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate, scoreColor } from "@/lib/utils";
 import type { Brand as BrandType } from "@/types/brand";
 
-async function getBrands(orgId: string, userId: string): Promise<BrandType[]> {
+async function getBrands(orgId: string): Promise<BrandType[]> {
   try {
     await connectDB();
-    return Brand.find({
-      $or: [{ orgId }, { userId, orgId: { $exists: false } }],
-    })
-      .sort({ updatedAt: -1 })
-      .lean() as unknown as BrandType[];
+    return Brand.find({ orgId }).sort({ updatedAt: -1 }).lean() as unknown as BrandType[];
   } catch {
     return [];
   }
@@ -29,7 +25,7 @@ export default async function DashboardPage() {
   if (!session?.user?.id) redirect("/auth/login");
 
   const ctx = await getOrgContext(session);
-  const brands = ctx ? await getBrands(ctx.orgId, session.user.id) : [];
+  const brands = ctx ? await getBrands(ctx.orgId) : [];
 
   const quickActions = [
     { href: "/onboarding", icon: Sparkles, label: "New Brand", desc: "Start with AI interview" },

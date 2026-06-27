@@ -3,13 +3,11 @@ import type { Session } from "next-auth";
 import dbConnect from "./mongoose";
 import Membership, { Role } from "../models/Membership";
 import Organization, { IOrganization } from "../models/Organization";
+import Brand from "../models/Brand";
 import { enforceLimit } from "./usage";
+import { ROLE_RANK, roleAtLeast } from "./roles";
 
-export const ROLE_RANK: Record<Role, number> = { viewer: 1, editor: 2, admin: 3, owner: 4 };
-
-export function roleAtLeast(role: Role, min: Role): boolean {
-  return ROLE_RANK[role] >= ROLE_RANK[min];
-}
+export { ROLE_RANK, roleAtLeast };
 
 export interface OrgContext {
   org: IOrganization;
@@ -79,6 +77,42 @@ export type OrgLimitResult =
  *   if (!gate.ok) return gate.response;
  *   ... use gate.orgId for trackEvent ...
  */
+export type BrandAccessResult =
+  | { ok: true; ctx: OrgContext }
+  | { ok: false; response: NextResponse };
+
+/**
+ * Guard for any route that operates on a specific brand by id. Verifies:
+ *  1. the caller has a workspace + the minimum role, AND
+ *  2. the brand actually belongs to that workspace.
+ * This is the single chokepoint that prevents cross-tenant brand reads/writes.
+ *
+ *   const access = await requireBrandAccess(session, brandId, "editor");
+ *   if (!access.ok) return access.response;
+ *   await Brand.findOneAndUpdate({ _id: brandId, orgId: access.ctx.orgId }, ...)
+ */
+export async function requireBrandAccess(
+  session: Session | null,
+  brandId: string | null | undefined,
+  min: Role = "viewer"
+): Promise<BrandAccessResult> {
+  const ctx = await getOrgContext(session);
+  if (!ctx) {
+    return { ok: false, response: NextResponse.json({ error: "No workspace access" }, { status: 403 }) };
+  }
+  if (!roleAtLeast(ctx.role, min)) {
+    return { ok: false, response: NextResponse.json({ error: "Insufficient permissions" }, { status: 403 }) };
+  }
+  if (!brandId) {
+    return { ok: false, response: NextResponse.json({ error: "brandId is required" }, { status: 400 }) };
+  }
+  const exists = await Brand.exists({ _id: brandId, orgId: ctx.orgId });
+  if (!exists) {
+    return { ok: false, response: NextResponse.json({ error: "Brand not found in this workspace" }, { status: 404 }) };
+  }
+  return { ok: true, ctx };
+}
+
 export async function enforceOrgLimit(session: Session | null, feature: string): Promise<OrgLimitResult> {
   const ctx = await getOrgContext(session);
   if (!ctx) {

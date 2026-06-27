@@ -15,12 +15,7 @@ export async function GET() {
     const ctx = await getOrgContext(session);
     if (!ctx) return NextResponse.json({ brands: [] });
 
-    // Scope to the workspace; include the user's own un-migrated brands as a fallback.
-    const brands = await Brand.find({
-      $or: [{ orgId: ctx.orgId }, { userId: session.user.id, orgId: { $exists: false } }],
-    })
-      .sort({ updatedAt: -1 })
-      .lean();
+    const brands = await Brand.find({ orgId: ctx.orgId }).sort({ updatedAt: -1 }).lean();
     return NextResponse.json({ brands });
   } catch {
     return NextResponse.json({ brands: [] });

@@ -24,7 +24,8 @@ export async function POST(req: NextRequest) {
     if (!gate.ok) return gate.response;
 
     await connectDB();
-    const brand = await Brand.findOne({ _id: brandId, userId: session.user.id }).lean();
+    // Scope to the workspace — never read another tenant's brand.
+    const brand = brandId ? await Brand.findOne({ _id: brandId, orgId: gate.orgId }).lean() : null;
 
     // Convert images to base64 for vision model
     const imageContents = await Promise.all(
@@ -88,15 +89,18 @@ Return ONLY valid JSON in this exact format:
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     const result = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
 
-    // Persist audit results
+    // Persist audit results — scoped to the workspace.
     if (brandId) {
-      await Brand.findByIdAndUpdate(brandId, {
-        $set: {
-          auditScore: result.overallScore,
-          auditViolations: result.violations || [],
-          auditLastRun: new Date(),
-        },
-      });
+      await Brand.findOneAndUpdate(
+        { _id: brandId, orgId: gate.orgId },
+        {
+          $set: {
+            auditScore: result.overallScore,
+            auditViolations: result.violations || [],
+            auditLastRun: new Date(),
+          },
+        }
+      );
     }
 
     await trackEvent({ userId: session.user.id, orgId: gate.orgId, feature: "audit", event: "audit.run", step: 1, brandId: brandId || undefined });

@@ -7,8 +7,8 @@ import { getOrgContext, requireRole } from "@/lib/org-context";
 
 const UPDATABLE_REVIEW_FIELDS = ["title", "description", "status", "assetType", "assetContent"] as const;
 
-function scope(id: string, orgId: string, userId: string) {
-  return { _id: id, $or: [{ orgId }, { userId, orgId: { $exists: false } }] };
+function scope(id: string, orgId: string) {
+  return { _id: id, orgId };
 }
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -20,7 +20,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     await connectDB();
     const ctx = await getOrgContext(session);
     if (!ctx) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    const review = await Review.findOne(scope(id, ctx.orgId, session.user.id)).lean();
+    const review = await Review.findOne(scope(id, ctx.orgId)).lean();
     if (!review) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ review });
   } catch {
@@ -43,7 +43,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     try {
       await connectDB();
       const review = await Review.findOneAndUpdate(
-        scope(id, ctx.orgId, session.user.id),
+        scope(id, ctx.orgId),
         {
           $push: {
             comments: {
@@ -78,7 +78,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     await connectDB();
     const review = await Review.findOneAndUpdate(
-      scope(id, guard.ctx.orgId, session.user.id),
+      scope(id, guard.ctx.orgId),
       { $set: update },
       { new: true }
     );
@@ -99,7 +99,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params;
   try {
     await connectDB();
-    const res = await Review.deleteOne(scope(id, guard.ctx.orgId, session.user.id));
+    const res = await Review.deleteOne(scope(id, guard.ctx.orgId));
     if (res.deletedCount === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ success: true });
   } catch {

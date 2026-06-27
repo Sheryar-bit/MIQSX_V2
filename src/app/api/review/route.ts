@@ -6,8 +6,8 @@ import Review from "@/models/Review";
 import { getOrgContext, requireRole } from "@/lib/org-context";
 import { randomBytes } from "crypto";
 
-function scopeFilter(orgId: string, userId: string) {
-  return { $or: [{ orgId }, { userId, orgId: { $exists: false } }] };
+function scopeFilter(orgId: string) {
+  return { orgId };
 }
 
 export async function GET() {
@@ -18,7 +18,7 @@ export async function GET() {
     await connectDB();
     const ctx = await getOrgContext(session);
     if (!ctx) return NextResponse.json({ reviews: [] });
-    const reviews = await Review.find(scopeFilter(ctx.orgId, session.user.id))
+    const reviews = await Review.find(scopeFilter(ctx.orgId))
       .sort({ updatedAt: -1 })
       .lean();
     return NextResponse.json({ reviews });
@@ -71,7 +71,7 @@ export async function PATCH(req: NextRequest) {
   const action = searchParams.get("action");
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
-  const filter = { _id: id, ...scopeFilter(guard.ctx.orgId, session.user.id) };
+  const filter = { _id: id, ...scopeFilter(guard.ctx.orgId) };
 
   try {
     await connectDB();

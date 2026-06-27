@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { groq, MODELS } from "@/lib/groq";
 import { connectDB } from "@/lib/mongoose";
 import Brand from "@/models/Brand";
+import { requireBrandAccess } from "@/lib/org-context";
 
 const SYSTEM_PROMPT = `You are the MIQSX AI Brand Strategist — a world-class brand consultant who helps businesses discover their Brand DNA through a conversational interview. Your job is to guide the user through a structured but natural conversation.
 
@@ -39,15 +40,16 @@ export async function POST(req: NextRequest) {
   // Demo mode: run in memory when MongoDB is not connected or brandId is "DEMO"
   let brand: { _id: string; chatHistory: unknown[] } | null = null;
   const demoMode = brandId === "DEMO" || !process.env.MONGODB_URI;
+  let orgId: string | undefined;
 
   if (!demoMode) {
-    try {
-      await connectDB();
-      brand = await Brand.findOne({ _id: brandId, userId: session.user.id });
-      if (!brand) return NextResponse.json({ error: "Brand not found" }, { status: 404 });
-    } catch {
-      // MongoDB not available — fall through to demo mode
-    }
+    // Verify the brand belongs to the caller's workspace (editor+).
+    const access = await requireBrandAccess(session, brandId, "editor");
+    if (!access.ok) return access.response;
+    orgId = access.ctx.orgId;
+    await connectDB();
+    brand = await Brand.findOne({ _id: brandId, orgId });
+    if (!brand) return NextResponse.json({ error: "Brand not found" }, { status: 404 });
   }
 
   const messages = [
@@ -86,7 +88,7 @@ export async function POST(req: NextRequest) {
         try {
           const dna = JSON.parse(dnaMatch[1]);
           if (!demoMode && brand) {
-            await Brand.findByIdAndUpdate(brandId, {
+            await Brand.findOneAndUpdate({ _id: brandId, orgId }, {
               $set: {
                 dna,
                 onboardingComplete: true,
@@ -105,7 +107,7 @@ export async function POST(req: NextRequest) {
         }
       } else if (!demoMode && brand) {
         // Save ongoing chat history (skip in demo mode)
-        await Brand.findByIdAndUpdate(brandId, {
+        await Brand.findOneAndUpdate({ _id: brandId, orgId }, {
           $push: {
             chatHistory: [
               { role: "user", content: message },

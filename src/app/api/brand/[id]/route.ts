@@ -5,10 +5,9 @@ import { connectDB } from "@/lib/mongoose";
 import Brand from "@/models/Brand";
 import { getOrgContext, requireRole } from "@/lib/org-context";
 
-// Match a brand within the caller's workspace; include their own un-migrated
-// brands (orgId not yet set) as a transition fallback.
-function scope(id: string, orgId: string, userId: string) {
-  return { _id: id, $or: [{ orgId }, { userId, orgId: { $exists: false } }] };
+// Match a brand within the caller's workspace.
+function scope(id: string, orgId: string) {
+  return { _id: id, orgId };
 }
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -20,7 +19,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const ctx = await getOrgContext(session);
   if (!ctx) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const brand = await Brand.findOne(scope(id, ctx.orgId, session.user.id)).lean();
+  const brand = await Brand.findOne(scope(id, ctx.orgId)).lean();
   if (!brand) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ brand });
 }
@@ -65,7 +64,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   await connectDB();
   const brand = await Brand.findOneAndUpdate(
-    scope(id, guard.ctx.orgId, session.user.id),
+    scope(id, guard.ctx.orgId),
     { $set: update },
     { new: true }
   ).lean();
@@ -84,7 +83,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
   const { id } = await params;
   await connectDB();
-  const res = await Brand.deleteOne(scope(id, guard.ctx.orgId, session.user.id));
+  const res = await Brand.deleteOne(scope(id, guard.ctx.orgId));
   if (res.deletedCount === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ success: true });
 }
