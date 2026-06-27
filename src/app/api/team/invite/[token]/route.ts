@@ -6,6 +6,7 @@ import Organization from "@/models/Organization";
 import Membership from "@/models/Membership";
 import TeamInvite from "@/models/TeamInvite";
 import { PLANS, UserPlan } from "@/lib/plans";
+import { logAudit } from "@/lib/audit-log";
 
 // GET /api/team/invite/[token] — invite details for the accept page.
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
@@ -94,6 +95,14 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ to
     invite.acceptedAt = new Date();
     invite.acceptedBy = memberId as unknown as typeof invite.acceptedBy;
     await invite.save();
+
+    await logAudit({
+      orgId: org._id.toString(),
+      actorId: memberId,
+      actorName: session.user.name,
+      action: "member.joined",
+      detail: `joined as ${invite.role}`,
+    });
 
     return NextResponse.json({ ok: true, role: invite.role });
   } catch (err) {

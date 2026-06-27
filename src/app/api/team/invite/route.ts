@@ -8,6 +8,7 @@ import Membership from "@/models/Membership";
 import TeamInvite from "@/models/TeamInvite";
 import { sendTeamInviteEmail } from "@/lib/email";
 import { requireRole } from "@/lib/org-context";
+import { logAudit } from "@/lib/audit-log";
 import { PLANS, UserPlan } from "@/lib/plans";
 
 // POST /api/team/invite — invite someone to the active workspace (admin+).
@@ -86,6 +87,14 @@ export async function POST(req: NextRequest) {
     } catch (emailErr) {
       console.error("[team invite] Email send failed:", emailErr);
     }
+
+    await logAudit({
+      orgId: org._id.toString(),
+      actorId: session.user.id,
+      actorName: session.user.name,
+      action: "member.invited",
+      detail: `invited ${cleanEmail} as ${inviteRole}`,
+    });
 
     return NextResponse.json(
       {

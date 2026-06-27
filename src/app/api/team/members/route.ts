@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/mongoose";
 import Membership from "@/models/Membership";
 import { getOrgContext, requireRole } from "@/lib/org-context";
+import { logAudit } from "@/lib/audit-log";
 
 // GET /api/team/members — list members of the active workspace.
 export async function GET() {
@@ -65,6 +66,13 @@ export async function DELETE(req: NextRequest) {
     if (res.deletedCount === 0) {
       return NextResponse.json({ error: "Member not found or is the owner" }, { status: 404 });
     }
+    await logAudit({
+      orgId: guard.ctx.orgId,
+      actorId: session.user.id,
+      actorName: session.user.name,
+      action: "member.removed",
+      detail: "removed a member",
+    });
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[team members DELETE]", err);
@@ -95,6 +103,13 @@ export async function PATCH(req: NextRequest) {
     if (res.matchedCount === 0) {
       return NextResponse.json({ error: "Member not found or is the owner" }, { status: 404 });
     }
+    await logAudit({
+      orgId: guard.ctx.orgId,
+      actorId: session.user.id,
+      actorName: session.user.name,
+      action: "member.role_changed",
+      detail: `changed a member's role to ${role}`,
+    });
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[team members PATCH]", err);

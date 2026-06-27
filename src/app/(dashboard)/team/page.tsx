@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, Mail, Clock, Shield, Copy, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Users, Mail, Clock, Shield, Copy, Check, Activity, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -11,6 +12,13 @@ interface Member {
   email: string;
   role: string;
   joinedAt: string;
+}
+
+interface ActivityEntry {
+  actorName: string;
+  action: string;
+  detail?: string;
+  createdAt: string;
 }
 
 interface Invite {
@@ -30,8 +38,10 @@ function acceptUrl(token: string) {
 }
 
 export default function TeamPage() {
+  const router = useRouter();
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
+  const [activity, setActivity] = useState<ActivityEntry[]>([]);
   const [myRole, setMyRole] = useState<string>("");
   const [workspace, setWorkspace] = useState<{ name: string; plan: string } | null>(null);
   const [email, setEmail] = useState("");
@@ -41,8 +51,10 @@ export default function TeamPage() {
   const [notice, setNotice] = useState("");
   const [locked, setLocked] = useState(false);
   const [copied, setCopied] = useState("");
+  const [transferTo, setTransferTo] = useState("");
 
   const canManage = myRole === "owner" || myRole === "admin";
+  const isOwner = myRole === "owner";
 
   async function load() {
     const mRes = await fetch("/api/team/members").then((r) => r.json());
@@ -50,12 +62,42 @@ export default function TeamPage() {
     if (mRes.myRole) setMyRole(mRes.myRole);
     if (mRes.workspaceName) setWorkspace({ name: mRes.workspaceName, plan: mRes.plan });
 
-    // Only managers can list invites (the endpoint is admin-gated).
+    // Only managers can list invites + activity (admin-gated endpoints).
     if (mRes.myRole === "owner" || mRes.myRole === "admin") {
-      const iRes = await fetch("/api/team/invite").then((r) => r.json());
+      const [iRes, aRes] = await Promise.all([
+        fetch("/api/team/invite").then((r) => r.json()),
+        fetch("/api/team/activity").then((r) => r.json()),
+      ]);
       if (iRes.invites) setInvites(iRes.invites);
+      if (aRes.activity) setActivity(aRes.activity);
     }
     setLoading(false);
+  }
+
+  async function leaveWorkspace() {
+    if (!confirm("Leave this workspace? You'll lose access to its brands.")) return;
+    const res = await fetch("/api/team/leave", { method: "POST" });
+    if (res.ok) window.location.href = "/dashboard";
+    else setNotice((await res.json()).error || "Could not leave");
+  }
+
+  async function transferOwnership() {
+    if (!transferTo) return;
+    if (!confirm("Transfer ownership? You'll become an Admin and can't undo this yourself.")) return;
+    const res = await fetch("/api/team/transfer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: transferTo }),
+    });
+    if (res.ok) router.refresh(), load();
+    else setNotice((await res.json()).error || "Could not transfer");
+  }
+
+  async function deleteWorkspace() {
+    if (!confirm("Permanently delete this workspace and ALL its brands/reviews? This cannot be undone.")) return;
+    const res = await fetch("/api/team/workspace", { method: "DELETE" });
+    if (res.ok) window.location.href = "/dashboard";
+    else setNotice((await res.json()).error || "Could not delete");
   }
 
   useEffect(() => {
@@ -275,6 +317,78 @@ export default function TeamPage() {
           </div>
         )}
       </div>
+
+      {/* Activity feed — owner/admin */}
+      {canManage && activity.length > 0 && (
+        <div>
+          <h2 className="text-text font-semibold mb-3 flex items-center gap-2">
+            <Activity className="w-4 h-4 text-text-muted" /> Recent activity
+          </h2>
+          <div className="rounded-xl border border-border bg-surface divide-y divide-border">
+            {activity.map((a, idx) => (
+              <div key={idx} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                <span className="text-text-muted">
+                  <strong className="text-text">{a.actorName}</strong> {a.detail || a.action}
+                </span>
+                <span className="text-xs text-text-dim">
+                  {new Date(a.createdAt).toLocaleString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Workspace controls */}
+      {!loading && !isOwner && myRole && (
+        <button onClick={leaveWorkspace} className="text-sm text-error hover:underline">
+          Leave this workspace
+        </button>
+      )}
+
+      {isOwner && (
+        <div className="rounded-2xl border border-error/30 bg-error/5 p-5 space-y-4">
+          <h2 className="text-text font-semibold flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-error" /> Danger zone
+          </h2>
+
+          {members.filter((m) => m.role !== "owner").length > 0 && (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <select
+                value={transferTo}
+                onChange={(e) => setTransferTo(e.target.value)}
+                className="h-9 rounded-lg border border-border bg-surface px-3 text-sm text-text focus:outline-none focus:border-primary"
+              >
+                <option value="">Transfer ownership to…</option>
+                {members
+                  .filter((m) => m.role !== "owner")
+                  .map((m) => (
+                    <option key={m.userId} value={m.userId} className="bg-surface">
+                      {m.name} ({m.email})
+                    </option>
+                  ))}
+              </select>
+              <button
+                onClick={transferOwnership}
+                disabled={!transferTo}
+                className="text-sm border border-border rounded-lg px-3 py-1.5 text-text hover:bg-surface-2 disabled:opacity-50"
+              >
+                Transfer
+              </button>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between pt-1">
+            <p className="text-text-muted text-sm">Permanently delete this workspace and all its data.</p>
+            <button
+              onClick={deleteWorkspace}
+              className="text-sm bg-error/90 hover:bg-error text-white px-3 py-1.5 rounded-lg"
+            >
+              Delete workspace
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
