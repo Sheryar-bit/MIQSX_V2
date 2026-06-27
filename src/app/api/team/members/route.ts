@@ -31,7 +31,13 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({ members, count: members.length, myRole: ctx.role });
+    return NextResponse.json({
+      members,
+      count: members.length,
+      myRole: ctx.role,
+      workspaceName: ctx.org.name,
+      plan: ctx.org.plan,
+    });
   } catch (err) {
     console.error("[team members GET]", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

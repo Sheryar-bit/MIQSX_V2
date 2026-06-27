@@ -3,6 +3,7 @@ import { randomBytes } from "crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/mongoose";
+import User from "@/models/User";
 import Membership from "@/models/Membership";
 import TeamInvite from "@/models/TeamInvite";
 import { sendTeamInviteEmail } from "@/lib/email";
@@ -47,6 +48,16 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+
+    // Already a member?
+    const existingUser = await User.findOne({ email: cleanEmail }).select("_id");
+    if (existingUser) {
+      const alreadyMember = await Membership.findOne({ orgId: org._id, userId: existingUser._id });
+      if (alreadyMember) {
+        return NextResponse.json({ error: "That person is already a member of this workspace." }, { status: 409 });
+      }
+    }
+
     const existing = await TeamInvite.findOne({ orgId: org._id, email: cleanEmail, status: "pending" });
     if (existing) {
       return NextResponse.json({ error: "A pending invite already exists for this email." }, { status: 409 });
