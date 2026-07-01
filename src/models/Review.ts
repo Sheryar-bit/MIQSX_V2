@@ -10,6 +10,7 @@ export interface IComment {
 export interface IReview extends Document {
   brandId?: Schema.Types.ObjectId;
   userId: string;
+  orgId?: Schema.Types.ObjectId;
   title: string;
   description?: string;
   assetType: "logo" | "caption" | "image" | "tagline" | "design";
@@ -38,6 +39,7 @@ const ReviewSchema = new Schema<IReview>(
   {
     brandId: { type: Schema.Types.ObjectId, ref: "Brand" },
     userId: { type: String, required: true },
+    orgId: { type: Schema.Types.ObjectId, ref: "Organization", index: true },
     title: { type: String, required: true },
     description: String,
     assetType: {

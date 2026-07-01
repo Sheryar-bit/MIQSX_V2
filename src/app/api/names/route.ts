@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { groq, MODELS } from "@/lib/groq";
 import { connectDB } from "@/lib/mongoose";
 import Brand from "@/models/Brand";
+import { requireBrandAccess } from "@/lib/org-context";
 import dns from "dns/promises";
 
 async function checkDomain(domain: string): Promise<boolean> {
@@ -22,9 +23,14 @@ export async function POST(req: NextRequest) {
   const { brandId, keywords, industry, style } = await req.json();
 
   await connectDB();
-  const brand = brandId
-    ? await Brand.findOne({ _id: brandId, userId: session.user.id }).lean()
-    : null;
+  let brand: Record<string, unknown> | null = null;
+  let orgId: string | undefined;
+  if (brandId) {
+    const access = await requireBrandAccess(session, brandId, "editor");
+    if (!access.ok) return access.response;
+    orgId = access.ctx.orgId;
+    brand = await Brand.findOne({ _id: brandId, orgId }).lean() as Record<string, unknown> | null;
+  }
 
   const dnaContext = brand && (brand as { dna?: object }).dna
     ? `Brand DNA context: ${JSON.stringify((brand as { dna?: object }).dna)}`
@@ -79,7 +85,7 @@ Return ONLY valid JSON array:
 
   // Save to brand if associated
   if (brandId) {
-    await Brand.findByIdAndUpdate(brandId, { $set: { generatedNames: withAvailability } });
+    await Brand.findOneAndUpdate({ _id: brandId, orgId }, { $set: { generatedNames: withAvailability } });
   }
 
   return NextResponse.json({ names: withAvailability });

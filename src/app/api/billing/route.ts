@@ -1,78 +1,66 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import dbConnect from "@/lib/mongoose";
-import User from "@/models/User";
+import { getOrgContext, requireRole } from "@/lib/org-context";
 import { PLANS, UserPlan } from "@/lib/plans";
 import { activatePlan } from "@/lib/activate-plan";
 
-// GET /api/billing — current plan details
+export const runtime = "nodejs";
+
+// GET /api/billing — current workspace plan details
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    await dbConnect();
-    const user = await User.findById(session.user.id);
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
+  const ctx = await getOrgContext(session);
+  if (!ctx) return NextResponse.json({ error: "No workspace" }, { status: 404 });
 
-    const currentPlan = PLANS[user.plan as UserPlan] ?? PLANS.free;
+  const org = ctx.org;
+  const currentPlan = PLANS[org.plan as UserPlan] ?? PLANS.free;
 
-    return NextResponse.json({
-      current: {
-        plan: user.plan,
-        activatedAt: user.planActivatedAt,
-        expiresAt: user.planExpiresAt,
-      },
-      plans: Object.values(PLANS).map((p) => ({
-        id: p.id,
-        name: p.name,
-        price: p.price,
-        limits: p.limits,
-        features: p.features,
-        isCurrent: p.id === user.plan,
-      })),
-      limits: currentPlan.limits,
-    });
-  } catch (err) {
-    console.error("[billing GET]", err);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
+  return NextResponse.json({
+    current: {
+      plan: org.plan,
+      activatedAt: org.planActivatedAt,
+      expiresAt: org.planExpiresAt,
+    },
+    plans: Object.values(PLANS).map((p) => ({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      limits: p.limits,
+      features: p.features,
+      isCurrent: p.id === org.plan,
+    })),
+    limits: currentPlan.limits,
+    role: ctx.role,
+  });
 }
 
-// POST /api/billing — simulate plan upgrade
-// In production, replace the body of this handler with your payment gateway
-// callback (e.g. Stripe webhook, JazzCash/Easypaisa callback, or manual activation).
+// POST /api/billing — DEV-ONLY plan switch (gated). Real upgrades go through
+// /api/billing/checkout → Stripe webhook → activatePlan. Owner-only.
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // SECURITY: direct client-driven plan changes are a free-escalation hole.
-  // Real upgrades must come from the payment gateway webhook (Phase 2).
-  // This self-service path is allowed only when ALLOW_DEV_PLAN_SWITCH=true (local testing).
   if (process.env.ALLOW_DEV_PLAN_SWITCH !== "true") {
-    return NextResponse.json(
-      { error: "Plan changes must go through checkout." },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: "Plan changes must go through checkout." }, { status: 403 });
   }
 
-  try {
-    const { plan } = await req.json() as { plan: UserPlan };
+  const guard = await requireRole(session, "owner");
+  if (!guard.ok) return guard.response;
 
+  try {
+    const { plan } = (await req.json()) as { plan: UserPlan };
     if (!["free", "pro", "agency"].includes(plan)) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
-    // Single source of truth — same helper a real gateway webhook will call.
-    const result = await activatePlan(session.user.id, plan);
-
+    const result = await activatePlan(guard.ctx.orgId, plan);
     return NextResponse.json({
       ok: true,
       plan: result.plan,

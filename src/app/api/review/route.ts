@@ -3,17 +3,24 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
 import Review from "@/models/Review";
+import { getOrgContext, requireRole } from "@/lib/org-context";
 import { randomBytes } from "crypto";
 
-export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+function scopeFilter(orgId: string) {
+  return { orgId };
+}
 
-  const userId = (session.user as { id?: string }).id;
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
     await connectDB();
-    const reviews = await Review.find({ userId }).sort({ updatedAt: -1 }).lean();
+    const ctx = await getOrgContext(session);
+    if (!ctx) return NextResponse.json({ reviews: [] });
+    const reviews = await Review.find(scopeFilter(ctx.orgId))
+      .sort({ updatedAt: -1 })
+      .lean();
     return NextResponse.json({ reviews });
   } catch {
     return NextResponse.json({ reviews: [] });
@@ -22,9 +29,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const userId = (session.user as { id?: string }).id;
+  const guard = await requireRole(session, "editor");
+  if (!guard.ok) return guard.response;
+
   const body = await req.json();
   const { title, description, assetType, assetContent } = body;
 
@@ -35,7 +44,8 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB();
     const review = await Review.create({
-      userId,
+      userId: session.user.id,
+      orgId: guard.ctx.orgId,
       title,
       description,
       assetType: assetType || "design",
@@ -51,15 +61,17 @@ export async function POST(req: NextRequest) {
 // PATCH /api/review?action=generate-token&id=...
 export async function PATCH(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const userId = (session.user as { id?: string }).id;
+  const guard = await requireRole(session, "editor");
+  if (!guard.ok) return guard.response;
 
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   const action = searchParams.get("action");
-
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+
+  const filter = { _id: id, ...scopeFilter(guard.ctx.orgId) };
 
   try {
     await connectDB();
@@ -68,7 +80,7 @@ export async function PATCH(req: NextRequest) {
       const token = randomBytes(32).toString("hex");
       const tokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
       const review = await Review.findOneAndUpdate(
-        { _id: id, userId },
+        filter,
         { publicToken: token, tokenExpiry, status: "in_review" },
         { new: true }
       );
@@ -76,7 +88,6 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ token, review });
     }
 
-    // Whitelist only, scoped to the owner.
     const body = await req.json();
     const allowed = ["title", "description", "status", "assetType", "assetContent"] as const;
     const update: Record<string, unknown> = {};
@@ -86,7 +97,7 @@ export async function PATCH(req: NextRequest) {
     if (Object.keys(update).length === 0) {
       return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });
     }
-    const review = await Review.findOneAndUpdate({ _id: id, userId }, { $set: update }, { new: true });
+    const review = await Review.findOneAndUpdate(filter, { $set: update }, { new: true });
     if (!review) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ review });
   } catch {

@@ -3,6 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
 import Brand from "@/models/Brand";
+import { getOrgContext, requireRole } from "@/lib/org-context";
+
+// Match a brand within the caller's workspace.
+function scope(id: string, orgId: string) {
+  return { _id: id, orgId };
+}
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
@@ -10,14 +16,16 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   await connectDB();
-  const brand = await Brand.findOne({ _id: id, userId: session.user.id }).lean();
-  if (!brand) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const ctx = await getOrgContext(session);
+  if (!ctx) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  const brand = await Brand.findOne(scope(id, ctx.orgId)).lean();
+  if (!brand) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ brand });
 }
 
-// Fields a client is allowed to update. Anything else (userId, _id, timestamps)
-// is dropped to prevent mass-assignment / ownership reassignment.
+// Fields a member is allowed to update. Anything else (userId, orgId, _id,
+// timestamps) is dropped to prevent mass-assignment / ownership reassignment.
 const UPDATABLE_FIELDS = [
   "name",
   "industry",
@@ -39,22 +47,24 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Editors and above can modify brands; viewers cannot.
+  const guard = await requireRole(session, "editor");
+  if (!guard.ok) return guard.response;
+
   const { id } = await params;
   const body = (await req.json()) as Record<string, unknown>;
 
-  // Whitelist only — never trust the raw body.
   const update: Record<string, unknown> = {};
   for (const key of UPDATABLE_FIELDS) {
     if (key in body) update[key] = body[key];
   }
-
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });
   }
 
   await connectDB();
   const brand = await Brand.findOneAndUpdate(
-    { _id: id, userId: session.user.id },
+    scope(id, guard.ctx.orgId),
     { $set: update },
     { new: true }
   ).lean();
@@ -67,8 +77,13 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Only admins+ can delete a brand.
+  const guard = await requireRole(session, "admin");
+  if (!guard.ok) return guard.response;
+
   const { id } = await params;
   await connectDB();
-  await Brand.deleteOne({ _id: id, userId: session.user.id });
+  const res = await Brand.deleteOne(scope(id, guard.ctx.orgId));
+  if (res.deletedCount === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ success: true });
 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { groq, MODELS } from "@/lib/groq";
-import { enforceLimit } from "@/lib/usage";
+import { enforceOrgLimit } from "@/lib/org-context";
 import { trackEvent } from "@/lib/analytics";
 
 export async function POST(req: NextRequest) {
@@ -12,8 +12,8 @@ export async function POST(req: NextRequest) {
   const { content, assetType, brandDNA } = await req.json();
   if (!content) return NextResponse.json({ error: "content required" }, { status: 400 });
 
-  const limited = await enforceLimit(session.user.id, "focus-group");
-  if (limited) return limited;
+  const gate = await enforceOrgLimit(session, "focus-group");
+  if (!gate.ok) return gate.response;
 
   const audienceHint = brandDNA?.audience
     ? `Target audience: ${brandDNA.audience.primaryAge || "25-35"} ${brandDNA.audience.primaryGender || "mixed"} in ${brandDNA.audience.primaryLocation || "Pakistan"}, interested in ${brandDNA.audience.primaryInterests?.join(", ") || "lifestyle, tech"}.`
@@ -72,6 +72,6 @@ Make personas diverse: include different cities (Karachi, Lahore, Islamabad, Pes
     return NextResponse.json({ error: "Failed to parse AI response" }, { status: 500 });
   }
 
-  await trackEvent({ userId: session.user.id, feature: "focus-group", event: "focus-group.run", step: 3 });
+  await trackEvent({ userId: session.user.id, orgId: gate.orgId, feature: "focus-group", event: "focus-group.run", step: 3 });
   return NextResponse.json(result);
 }

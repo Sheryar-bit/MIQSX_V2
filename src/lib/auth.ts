@@ -3,6 +3,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongoose";
 import User from "@/models/User";
+import Membership from "@/models/Membership";
+import Organization from "@/models/Organization";
 
 // Dev-only test account — never available in production builds.
 const TEST_USER = {
@@ -52,21 +54,49 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user, trigger }) {
-      // On sign-in, seed id + plan from the authorized user.
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
-        token.plan = user.plan ?? "free";
+        token.email = user.email;
+        token.name = user.name;
+        token.plan = "free"; // overwritten below from the active workspace
       }
-      // On an explicit client `update()` (e.g. right after an upgrade),
-      // re-sync the plan from the DB so the token isn't stale.
-      if (trigger === "update" && token.id) {
+
+      // Helper: load a workspace's plan.
+      const orgPlan = async (orgId: string) => {
+        const org = await Organization.findById(orgId).select("plan");
+        return org?.plan ?? "free";
+      };
+
+      // Seed the active workspace + its plan (oldest membership = personal workspace).
+      if (token.id && !token.activeOrgId) {
         try {
           await connectDB();
-          const fresh = await User.findById(token.id).select("plan");
-          if (fresh) token.plan = fresh.plan;
+          const m = await Membership.findOne({ userId: token.id }).sort({ joinedAt: 1 }).select("orgId");
+          if (m) {
+            const oid = m.orgId.toString();
+            token.activeOrgId = oid;
+            token.plan = await orgPlan(oid);
+          }
         } catch {
-          // keep the existing token.plan on a transient DB error
+          /* leave unset on transient error */
+        }
+      }
+
+      if (trigger === "update") {
+        try {
+          await connectDB();
+          // Switch workspace via update({ activeOrgId }) — only if a member.
+          const requestedOrg = (session as { activeOrgId?: string } | undefined)?.activeOrgId;
+          if (requestedOrg && token.id) {
+            const m = await Membership.findOne({ userId: token.id, orgId: requestedOrg });
+            if (m) token.activeOrgId = requestedOrg;
+          }
+          // Re-sync plan from the active workspace (e.g. right after an upgrade).
+          const activeOrg = token.activeOrgId;
+          if (activeOrg) token.plan = await orgPlan(activeOrg);
+        } catch {
+          /* keep existing token values */
         }
       }
       return token;
@@ -75,6 +105,9 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id;
         session.user.plan = token.plan;
+        session.user.activeOrgId = token.activeOrgId;
+        if (token.email) session.user.email = token.email;
+        if (token.name) session.user.name = token.name;
       }
       return session;
     },

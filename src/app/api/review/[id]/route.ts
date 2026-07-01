@@ -3,21 +3,24 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongoose";
 import Review from "@/models/Review";
+import { getOrgContext, requireRole } from "@/lib/org-context";
 
-// Fields the owner may update directly. Anything else (userId, publicToken,
-// tokenExpiry, client*, comments) is managed server-side, never mass-assigned.
 const UPDATABLE_REVIEW_FIELDS = ["title", "description", "status", "assetType", "assetContent"] as const;
+
+function scope(id: string, orgId: string) {
+  return { _id: id, orgId };
+}
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const userId = session.user.id;
-
   try {
     await connectDB();
-    const review = await Review.findOne({ _id: id, userId }).lean();
+    const ctx = await getOrgContext(session);
+    if (!ctx) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const review = await Review.findOne(scope(id, ctx.orgId)).lean();
     if (!review) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ review });
   } catch {
@@ -30,16 +33,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const userId = session.user.id;
   const body = await req.json();
 
-  // Adding a comment
+  // Commenting is allowed for any workspace member (incl. internal viewers/clients).
   if (body.comment) {
+    const ctx = await getOrgContext(session);
+    if (!ctx) return NextResponse.json({ error: "Not found" }, { status: 404 });
     const userEmail = session.user.email || "team@miqsx.com";
     try {
       await connectDB();
       const review = await Review.findOneAndUpdate(
-        { _id: id, userId },
+        scope(id, ctx.orgId),
         {
           $push: {
             comments: {
@@ -59,7 +63,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
   }
 
-  // Update status or other fields — whitelist only, scoped to the owner.
+  // Editing fields/status requires editor+.
+  const guard = await requireRole(session, "editor");
+  if (!guard.ok) return guard.response;
+
   const update: Record<string, unknown> = {};
   for (const key of UPDATABLE_REVIEW_FIELDS) {
     if (key in body) update[key] = body[key];
@@ -70,7 +77,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   try {
     await connectDB();
-    const review = await Review.findOneAndUpdate({ _id: id, userId }, { $set: update }, { new: true });
+    const review = await Review.findOneAndUpdate(
+      scope(id, guard.ctx.orgId),
+      { $set: update },
+      { new: true }
+    );
     if (!review) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ review });
   } catch {
@@ -82,12 +93,13 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { id } = await params;
-  const userId = session.user.id;
+  const guard = await requireRole(session, "admin");
+  if (!guard.ok) return guard.response;
 
+  const { id } = await params;
   try {
     await connectDB();
-    const res = await Review.deleteOne({ _id: id, userId });
+    const res = await Review.deleteOne(scope(id, guard.ctx.orgId));
     if (res.deletedCount === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ success: true });
   } catch {

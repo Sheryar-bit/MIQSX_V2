@@ -3,8 +3,8 @@
 > AI Brand Operating System. This file is the single source of truth for where we
 > stand. Update the **Status** column and the **Changelog** after each phase.
 
-**Last updated:** 2026-06-19
-**Current phase:** Phase 3 (Organization model — pending team decision). Phases 4–5 hardening largely done; remaining items blocked on accounts (R2/Upstash/Sentry) or the team's data-model call.
+**Last updated:** 2026-06-21
+**Current phase:** Phase 3 multi-tenancy **BUILT** (Org/Membership, requireRole, plan→org, org-scoped data, switcher). Needs a one-time migration run + browser verification. Phase 4–5 remaining items blocked on accounts (R2/Upstash/Sentry).
 
 ---
 
@@ -41,7 +41,7 @@ all 11 AI routes. Phase 0 (security) is complete. The next real work is throttli
 | Analytics TTL + nightly rollup | ✅ |
 | Plan-gated image model quality | ✅ |
 | Tests (Vitest) + CI (GitHub Actions) | ✅ |
-| Multi-tenancy (Organization / `requireRole`) | 🔴 team decision |
+| Multi-tenancy (Organization / `requireRole`) | ✅ built — needs migration run + browser test |
 | Object storage (images out of data-URLs) | 🔴 needs R2/Cloudinary |
 | Async AI job queue | 🔴 needs QStash |
 | Redis caching | 🔴 needs Upstash |
@@ -116,21 +116,35 @@ User, billing page redirects to Stripe and re-syncs the session on return. Webho
 
 ---
 
-## Phase 3 — Real multi-tenancy (unblock Agency) · 🟡 IN PROGRESS · ~2 weeks · BIGGEST GAP
+## Phase 3 — Real multi-tenancy (unblock Agency) · ✅ BUILT (needs migration + browser test) · ~2 weeks
+
+Uniform-org model: **Organization = tenant** (holds plan/billing/usage), **Brand = client space**, solo user =
+org of one. `Membership` join table with roles owner/admin/editor/viewer.
 
 | # | Item | Status |
 |---|---|---|
-| 1 | Introduce `Organization` model; brands/reviews/analytics keyed by `orgId` | ⚪ pending team decision on data model |
-| 2 | `requireRole()` guard replacing hardcoded `{ userId }` (e.g. `api/brand/[id]`) | ⚪ depends on #1 |
-| 3 | Finish invite flow — `/team/accept/[token]` page + accept route | ✅ done |
-| 4 | Fix IDOR / mass-assignment — scope writes by tenant + whitelist bodies | ✅ `brand/[id]` + `review/[id]` + `review` PATCH scoped by owner + whitelisted |
+| 1 | `Organization` + `Membership` models; brands/reviews/analytics keyed by `orgId` | ✅ models + backfill migration (`/api/admin/migrate-orgs`) |
+| 2 | `requireRole()` guard replacing hardcoded `{ userId }` everywhere | ✅ `src/lib/org-context.ts`; brand/review/team routes role-gated |
+| 3 | Invite flow + accept into the org; org-switcher UI | ✅ accept writes `Membership`; `OrgSwitcher` + `/api/orgs` |
+| 4 | IDOR / mass-assignment — org-scoped + whitelisted bodies | ✅ all brand/review writes |
 
-**Done now:** invite accept route (`/api/team/invite/[token]`) + page (`/team/accept/[token]`) using existing
-`User.teamMembers` model; seat-limit re-checked at accept; self-accept/duplicate guards. Login + signup now
-honor `?callbackUrl=`. `brand/[id]` PATCH no longer mass-assignable (field whitelist).
-**Note:** accepting an invite adds the member, but they still won't *see* the owner's brands until #1 (brands
-keyed by org/owner instead of `userId`) lands — that's the architectural decision your team is reviewing.
-**Exit:** agency owner invites an editor who logs in and edits shared brands with correct permissions.
+**Built this pass (3A–3E):** Org/Membership models + `orgId` on Brand/Review/Analytics/TeamInvite; signup
+creates a personal org; `activeOrgId` in the JWT with membership-checked switching; `requireRole`/`enforceOrgLimit`
+guards; **plan + usage + Stripe moved from User → Organization** (checkout/webhook/portal/enforcement all org-based);
+every brand/review/analytics/team query flipped to `orgId`; org-switcher (hidden for solo users) + member
+management (role change / remove, owner-protected) + seat limits (viewers free).
+
+**⚠️ Required before this works on existing data:** set `CRON_SECRET` in `.env`, then run once:
+`curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/admin/migrate-orgs`
+(creates a personal org + owner membership per existing user, backfills `orgId`). New signups don't need it.
+
+**⚠️ Not yet browser-verified.** Typechecks + unit tests pass; the full agency flow (invite → accept → switch →
+shared brands) needs a manual click-test.
+
+**Dev caveat:** the dev-only test login (`test@miqsx.com`) has no Organization, so org-scoped routes 403 for it —
+use a real registered account to test.
+
+**Exit:** agency owner invites an editor who logs in, switches into the workspace, and edits shared brands with correct permissions.
 
 ---
 
@@ -214,6 +228,13 @@ Products: **MIQSX Pro** (PKR 2,999 / ~USD 11, monthly) and **MIQSX Agency** (PKR
 ---
 
 ## Changelog
+- **2026-06-21** — Phase 3 multi-tenancy BUILT (3A–3E). Added `Organization` + `Membership` models; `orgId` on
+  Brand/Review/Analytics/TeamInvite; backfill migration (`/api/admin/migrate-orgs`). `src/lib/org-context.ts`
+  (`getOrgContext`/`requireRole`/`enforceOrgLimit`); `activeOrgId` in JWT with membership-checked switching;
+  signup creates a personal org. Moved plan + usage + Stripe (checkout/webhook/portal) from User → Organization.
+  Flipped all brand/review/analytics/team queries to `orgId` with role gating. Org-switcher (`/api/orgs` +
+  `OrgSwitcher`, hidden for solo) + member management (role/remove, owner-protected) + seat limits (viewers free).
+  Typecheck clean, 10 tests green. Needs `CRON_SECRET` + one migration run + browser verification.
 - **2026-06-19** — Hardening batch (all "buildable now" items). **Phase 4/5 partial:** DB resilience
   (`mongoose` timeouts/pool + `/api/health`); security headers + CSP + locked image hosts (`next.config.ts`);
   analytics TTL (90d) + `AnalyticsRollup` model + secured `/api/cron/rollup` + `vercel.json` cron; email

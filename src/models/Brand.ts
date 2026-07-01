@@ -65,6 +65,7 @@ const AuditViolationSchema = new Schema({
 
 const BrandSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+  orgId: { type: Schema.Types.ObjectId, ref: "Organization", index: true },
   name: { type: String, required: true },
   industry: String,
   description: String,

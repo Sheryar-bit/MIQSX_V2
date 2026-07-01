@@ -3,7 +3,7 @@ import type Stripe from "stripe";
 import { getStripe, priceIdToPlan } from "@/lib/stripe";
 import { activatePlan } from "@/lib/activate-plan";
 import dbConnect from "@/lib/mongoose";
-import User from "@/models/User";
+import Organization from "@/models/Organization";
 import { UserPlan } from "@/lib/plans";
 
 export const runtime = "nodejs";
@@ -13,15 +13,15 @@ function periodEnd(sub: Stripe.Subscription): Date | undefined {
   return end ? new Date(end * 1000) : undefined;
 }
 
-async function resolveUserId(
-  metaUserId: string | undefined,
+async function resolveOrgId(
+  metaOrgId: string | undefined,
   customerId: string | undefined
 ): Promise<string | null> {
-  if (metaUserId) return metaUserId;
+  if (metaOrgId) return metaOrgId;
   if (customerId) {
     await dbConnect();
-    const u = await User.findOne({ stripeCustomerId: customerId }).select("_id");
-    if (u) return u._id.toString();
+    const org = await Organization.findOne({ stripeCustomerId: customerId }).select("_id");
+    if (org) return org._id.toString();
   }
   return null;
 }
@@ -51,12 +51,12 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const s = event.data.object as Stripe.Checkout.Session;
-        const userId = await resolveUserId(
-          s.metadata?.userId,
+        const orgId = await resolveOrgId(
+          s.metadata?.orgId,
           typeof s.customer === "string" ? s.customer : s.customer?.id
         );
         const plan = (s.metadata?.plan as UserPlan) ?? null;
-        if (!userId || !plan) break;
+        if (!orgId || !plan) break;
 
         // Pull the subscription to get the real period end.
         let expiresAt: Date | undefined;
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
           expiresAt = periodEnd(sub);
         }
 
-        await activatePlan(userId, plan, {
+        await activatePlan(orgId, plan, {
           expiresAt,
           stripeCustomerId: typeof s.customer === "string" ? s.customer : s.customer?.id,
           stripeSubscriptionId: typeof s.subscription === "string" ? s.subscription : s.subscription?.id ?? null,
@@ -79,32 +79,32 @@ export async function POST(req: NextRequest) {
         const sub = event.data.object as Stripe.Subscription;
         const priceId = sub.items.data[0]?.price?.id;
         const plan = (sub.metadata?.plan as UserPlan) ?? priceIdToPlan(priceId);
-        const userId = await resolveUserId(
-          sub.metadata?.userId,
+        const orgId = await resolveOrgId(
+          sub.metadata?.orgId,
           typeof sub.customer === "string" ? sub.customer : sub.customer?.id
         );
-        if (!userId || !plan) break;
+        if (!orgId || !plan) break;
 
         // Active/trialing → keep the plan; anything else (past_due, unpaid,
         // canceled) → drop to free.
         if (sub.status === "active" || sub.status === "trialing") {
-          await activatePlan(userId, plan, {
+          await activatePlan(orgId, plan, {
             expiresAt: periodEnd(sub),
             stripeSubscriptionId: sub.id,
           });
         } else {
-          await activatePlan(userId, "free", { stripeSubscriptionId: null });
+          await activatePlan(orgId, "free", { stripeSubscriptionId: null });
         }
         break;
       }
 
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
-        const userId = await resolveUserId(
-          sub.metadata?.userId,
+        const orgId = await resolveOrgId(
+          sub.metadata?.orgId,
           typeof sub.customer === "string" ? sub.customer : sub.customer?.id
         );
-        if (userId) await activatePlan(userId, "free", { stripeSubscriptionId: null });
+        if (orgId) await activatePlan(orgId, "free", { stripeSubscriptionId: null });
         break;
       }
 

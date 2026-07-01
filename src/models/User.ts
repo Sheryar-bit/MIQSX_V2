@@ -71,7 +71,7 @@ const UserSchema = new Schema<IUser>(
   { timestamps: true }
 );
 
-UserSchema.index({ email: 1 });
-UserSchema.index({ profileSlug: 1 });
+// Note: `email` and `profileSlug` already get indexes via `unique: true` on the
+// field — don't re-declare them here (Mongoose warns about duplicate indexes).
 
 export default mongoose.models.User || mongoose.model<IUser>("User", UserSchema);

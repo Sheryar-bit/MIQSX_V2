@@ -1,5 +1,5 @@
 import dbConnect from "./mongoose";
-import User from "../models/User";
+import Organization from "../models/Organization";
 import { UserPlan } from "./plans";
 
 export interface ActivatePlanResult {
@@ -16,13 +16,13 @@ export interface ActivatePlanOptions {
 }
 
 /**
- * The single source of truth for changing a user's plan.
+ * The single source of truth for changing an ORGANIZATION's plan.
  *
  * Server-only, and the ONLY place plan state is mutated. The Stripe webhook
  * calls this after verifying a payment; the client never sets the plan.
  */
 export async function activatePlan(
-  userId: string,
+  orgId: string,
   plan: UserPlan,
   opts: ActivatePlanOptions = {}
 ): Promise<ActivatePlanResult> {
@@ -48,8 +48,8 @@ export async function activatePlan(
   if (opts.stripeCustomerId !== undefined) set.stripeCustomerId = opts.stripeCustomerId;
   if (opts.stripeSubscriptionId !== undefined) set.stripeSubscriptionId = opts.stripeSubscriptionId;
 
-  const user = await User.findByIdAndUpdate(userId, set, { new: true });
-  if (!user) throw new Error(`activatePlan: user ${userId} not found`);
+  const org = await Organization.findByIdAndUpdate(orgId, set, { new: true });
+  if (!org) throw new Error(`activatePlan: org ${orgId} not found`);
 
-  return { plan: user.plan, activatedAt: user.planActivatedAt!, expiresAt: user.planExpiresAt ?? null };
+  return { plan: org.plan, activatedAt: org.planActivatedAt!, expiresAt: org.planExpiresAt ?? null };
 }

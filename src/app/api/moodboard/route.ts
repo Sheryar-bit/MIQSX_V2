@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { groq, MODELS } from "@/lib/groq";
 import { connectDB } from "@/lib/mongoose";
 import Brand from "@/models/Brand";
+import { requireBrandAccess } from "@/lib/org-context";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -16,6 +17,14 @@ export async function POST(req: NextRequest) {
 
     if (files.length < 2) {
       return NextResponse.json({ error: "Upload at least 2 inspiration images" }, { status: 400 });
+    }
+
+    // If saving to a brand, verify it belongs to the caller's workspace first.
+    let orgId: string | undefined;
+    if (brandId) {
+      const access = await requireBrandAccess(session, brandId, "editor");
+      if (!access.ok) return access.response;
+      orgId = access.ctx.orgId;
     }
 
     const imageContents = await Promise.all(
@@ -70,11 +79,11 @@ Return ONLY valid JSON:
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     const result = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
 
-    // Merge into Brand DNA if associated
+    // Merge into Brand DNA if associated — scoped to the workspace.
     if (brandId) {
       await connectDB();
       await Brand.findOneAndUpdate(
-        { _id: brandId, userId: session.user.id },
+        { _id: brandId, orgId },
         {
           $set: {
             "dna.colors": result.colorPalette,

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { groq, MODELS } from "@/lib/groq";
-import { enforceLimit } from "@/lib/usage";
+import { enforceOrgLimit } from "@/lib/org-context";
 import { trackEvent } from "@/lib/analytics";
 
 function hexToRgb(hex: string) {
@@ -50,8 +50,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "assetType and content or imageBase64 required" }, { status: 400 });
   }
 
-  const limited = await enforceLimit(session.user.id, "guardian");
-  if (limited) return limited;
+  const gate = await enforceOrgLimit(session, "guardian");
+  if (!gate.ok) return gate.response;
 
   const violations: { category: string; message: string; severity: "high" | "medium" | "low" }[] = [];
   const scores: Record<string, number> = {};
@@ -216,7 +216,7 @@ Return a JSON object with this structure:
     overall >= 70 ? "C" :
     overall >= 60 ? "D" : "F";
 
-  await trackEvent({ userId: session.user.id, feature: "guardian", event: "guardian.run", step: 3 });
+  await trackEvent({ userId: session.user.id, orgId: gate.orgId, feature: "guardian", event: "guardian.run", step: 3 });
   return NextResponse.json({
     overall,
     grade,

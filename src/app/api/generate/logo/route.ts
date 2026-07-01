@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { composeLogoVariants } from "@/lib/logo-composer";
 import type { IconName, FontId } from "@/lib/svg-icons";
 import type { LogoLayout } from "@/lib/logo-composer";
-import { enforceLimit } from "@/lib/usage";
+import { enforceOrgLimit } from "@/lib/org-context";
 import { trackEvent } from "@/lib/analytics";
 import { generateBrandImage, isCloudflareConfigured, NsfwPromptError } from "@/lib/imagegen";
 
@@ -64,8 +64,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const limited = await enforceLimit(session.user.id, "logo");
-    if (limited) return limited;
+    const gate = await enforceOrgLimit(session, "logo");
+    if (!gate.ok) return gate.response;
 
     const logoPrompt = buildLogoPrompt({
       brandName: brandName.trim(),
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await trackEvent({ userId: session.user.id, feature: "logo", event: "logo.ai_generated", step: 2 });
+    await trackEvent({ userId: session.user.id, orgId: gate.orgId, feature: "logo", event: "logo.ai_generated", step: 2 });
     return NextResponse.json({ images, prompt: logoPrompt });
   }
 
@@ -118,10 +118,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ svg, layout });
   }
 
-  const limited = await enforceLimit(session.user.id, "logo");
-  if (limited) return limited;
+  const gate = await enforceOrgLimit(session, "logo");
+  if (!gate.ok) return gate.response;
 
   const variants = composeLogoVariants(cfg);
-  await trackEvent({ userId: session.user.id, feature: "logo", event: "logo.generated", step: 2 });
+  await trackEvent({ userId: session.user.id, orgId: gate.orgId, feature: "logo", event: "logo.generated", step: 2 });
   return NextResponse.json({ variants });
 }

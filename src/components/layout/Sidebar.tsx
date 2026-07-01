@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard, Sparkles, Search, Type, Image,
   LogOut, Zap, ChevronRight, PenTool, Globe, Star, ImageIcon,
@@ -66,7 +66,17 @@ function NavItem({ href, label, icon: Icon, exact }: { href: string; label: stri
   );
 }
 
+const PLAN_META: Record<string, { label: string; blurb: string; width: string }> = {
+  free: { label: "Free Plan", blurb: "Limited monthly usage", width: "w-1/5" },
+  pro: { label: "Pro Plan", blurb: "Higher limits unlocked", width: "w-3/5" },
+  agency: { label: "Agency Plan", blurb: "Team & unlimited usage", width: "w-full" },
+};
+
 export function Sidebar() {
+  const { data: session } = useSession();
+  const plan = (session?.user?.plan as string) ?? "free";
+  const planMeta = PLAN_META[plan] ?? PLAN_META.free;
+
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 border-r border-border bg-surface flex flex-col z-40">
       {/* Logo */}
@@ -128,10 +138,10 @@ export function Sidebar() {
       {/* Footer */}
       <div className="p-4 border-t border-border">
         <div className="mb-3 rounded-xl bg-gradient-to-r from-primary/10 to-accent/10 border border-border p-3">
-          <p className="text-xs font-semibold text-text">Free Plan</p>
-          <p className="text-[11px] text-text-dim mt-0.5">1 brand · 5 audits</p>
+          <p className="text-xs font-semibold text-text">{planMeta.label}</p>
+          <p className="text-[11px] text-text-dim mt-0.5">{planMeta.blurb}</p>
           <div className="mt-2 h-1.5 rounded-full bg-surface-2">
-            <div className="h-full w-1/5 rounded-full bg-gradient-brand" />
+            <div className={cn("h-full rounded-full bg-gradient-brand", planMeta.width)} />
           </div>
         </div>
         <button
