@@ -2,9 +2,9 @@
 // festive routes. Wraps the low-level Cloudflare Workers AI client with the
 // app's model choice, plan-gated quality, and named aspect ratios so every
 // feature produces consistent FLUX output.
-import { generateImage, isCloudflareConfigured } from "./cloudflare";
+import { generateImage, isCloudflareConfigured, NsfwPromptError } from "./cloudflare";
 
-export { isCloudflareConfigured };
+export { isCloudflareConfigured, NsfwPromptError };
 
 // FLUX.1 [schnell] — the strongest Workers AI model for legible text and prompt
 // adherence (the SDXL family garbles letters).

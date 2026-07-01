@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { generateImage, isCloudflareConfigured } from "@/lib/cloudflare";
+import { generateImage, isCloudflareConfigured, NsfwPromptError } from "@/lib/cloudflare";
 
 const ORIGINAL_FETCH = global.fetch;
 
@@ -90,6 +90,22 @@ describe("generateImage", () => {
     );
 
     await expect(generateImage("@cf/bad/model", { prompt: "x" })).rejects.toThrow(/404/);
+  });
+
+  it("raises NsfwPromptError when the safety classifier rejects the prompt (code 3030)", async () => {
+    const cfBody = JSON.stringify({
+      errors: [{ message: "AiError: Input prompt contains NSFW content.", code: 3030 }],
+      success: false,
+      result: {},
+      messages: [],
+    });
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(cfBody, { status: 400, headers: { "content-type": "application/json" } })
+    );
+
+    await expect(generateImage("@cf/black-forest-labs/flux-1-schnell", { prompt: "x" })).rejects.toBeInstanceOf(
+      NsfwPromptError
+    );
   });
 
   it("throws when credentials are missing", async () => {

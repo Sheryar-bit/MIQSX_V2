@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { enforceLimit } from "@/lib/usage";
 import { trackEvent } from "@/lib/analytics";
-import { generateBrandImage, isCloudflareConfigured, FLUX_MODEL } from "@/lib/imagegen";
+import { generateBrandImage, isCloudflareConfigured, NsfwPromptError, FLUX_MODEL } from "@/lib/imagegen";
 
 type Festival = "eid" | "ramadan" | "independence" | "new-year";
 
@@ -57,6 +57,9 @@ export async function POST(req: NextRequest) {
     await trackEvent({ userId: session.user.id, feature: "festive", event: "festive.generated", step: 2 });
     return NextResponse.json({ imageUrl, festival, prompt, model: FLUX_MODEL });
   } catch (err) {
+    if (err instanceof NsfwPromptError) {
+      return NextResponse.json({ error: err.message }, { status: 400 });
+    }
     console.error("[FESTIVE]", err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Festive generation failed" },
