@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Shield, Upload, X, AlertTriangle, CheckCircle, Info } from "lucide-react";
 
 type AssetType = "caption" | "tagline" | "logo" | "image" | "design";
 type Severity = "high" | "medium" | "low";
@@ -21,39 +20,27 @@ interface GuardianResult {
   summary: string;
 }
 
-const severityConfig = {
-  high: { color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/30", icon: AlertTriangle },
-  medium: { color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/30", icon: Info },
-  low: { color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/30", icon: Info },
-};
+const ASSET_TYPES: AssetType[] = ["caption", "tagline", "logo", "image", "design"];
 
 function ScoreRing({ score, label }: { score: number; label: string }) {
-  const r = 30;
+  const r = 40;
   const circ = 2 * Math.PI * r;
   const offset = circ - (score / 100) * circ;
-  const color = score >= 80 ? "#22c55e" : score >= 60 ? "#f59e0b" : "#ef4444";
-
+  const color = score >= 80 ? "var(--sig)" : score >= 60 ? "var(--olive)" : "var(--red)";
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div className="relative h-20 w-20">
-        <svg viewBox="0 0 72 72" className="rotate-[-90deg]">
-          <circle cx="36" cy="36" r={r} fill="none" stroke="#1E2435" strokeWidth="6" />
-          <circle
-            cx="36" cy="36" r={r}
-            fill="none"
-            stroke={color}
-            strokeWidth="6"
-            strokeDasharray={circ}
-            strokeDashoffset={offset}
-            strokeLinecap="round"
-            style={{ transition: "stroke-dashoffset 0.8s ease" }}
-          />
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+      <div style={{ position: "relative", width: 88, height: 88 }}>
+        <svg viewBox="0 0 88 88" style={{ transform: "rotate(-90deg)", width: "100%", height: "100%" }}>
+          <circle cx="44" cy="44" r={r} fill="none" stroke="var(--surf2)" strokeWidth="6" />
+          <circle cx="44" cy="44" r={r} fill="none" stroke={color} strokeWidth="6"
+            strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
+            style={{ transition: "stroke-dashoffset 0.8s ease" }} />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-lg font-bold text-text">{score}</span>
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <span style={{ fontFamily: "'General Sans'", fontWeight: 700, fontSize: 20, color: "var(--ink)" }}>{score}</span>
         </div>
       </div>
-      <span className="text-xs text-text-dim">{label}</span>
+      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: ".12em", textTransform: "uppercase" as const, color: "var(--muted)", textAlign: "center" }}>{label}</span>
     </div>
   );
 }
@@ -96,179 +83,170 @@ export default function GuardianPage() {
   };
 
   const gradeColor = (g: string) =>
-    g === "A" ? "text-green-400" :
-    g === "B" ? "text-emerald-400" :
-    g === "C" ? "text-amber-400" :
-    g === "D" ? "text-orange-400" : "text-red-400";
+    g === "A" ? "var(--sig)" :
+    g === "B" ? "var(--leaf)" :
+    g === "C" ? "var(--olive)" :
+    g === "D" ? "var(--terra)" : "var(--red)";
+
+  const severityColor = (s: Severity) =>
+    s === "high" ? "var(--red)" : s === "medium" ? "var(--terra)" : "var(--olive)";
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="mb-8 flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center">
-          <Shield className="h-5 w-5 text-primary-light" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-text">Brand Guardian</h1>
-          <p className="text-sm text-text-muted">Score any asset against your Brand DNA</p>
-        </div>
-      </div>
+    <div style={{ padding: "clamp(24px, 3.5vw, 44px) clamp(20px, 4vw, 52px) 90px" }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Input panel */}
-        <div className="space-y-4">
-          <div>
-            <label className="text-xs font-semibold text-text-dim uppercase tracking-widest mb-2 block">
-              Asset Type
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {(["caption", "tagline", "logo", "image", "design"] as AssetType[]).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setAssetType(t)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                    assetType === t
-                      ? "bg-primary/20 border-primary/40 text-primary-light"
-                      : "bg-surface-2 border-border text-text-muted hover:text-text"
-                  }`}
-                >
-                  {t.charAt(0).toUpperCase() + t.slice(1)}
-                </button>
-              ))}
-            </div>
+        {/* Header */}
+        <div style={{ marginBottom: "clamp(26px, 4vh, 40px)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+            <span style={{ width: 38, height: 38, borderRadius: 11, background: "color-mix(in oklab, var(--sig) 14%, transparent)", color: "var(--sig)", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </span>
+            <h1 style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: "clamp(27px, 3.2vw, 40px)", lineHeight: 1.05, letterSpacing: "-0.03em", margin: 0 }}>
+              Brand <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, color: "var(--sig)" }}>Guardian</span>
+            </h1>
           </div>
+          <p style={{ fontFamily: "'Newsreader', serif", fontSize: 17, lineHeight: 1.5, color: "var(--muted)", margin: 0, maxWidth: "56ch" }}>
+            Score any asset against your <strong style={{ color: "var(--ink)", fontWeight: 600 }}>Brand DNA</strong> — catch violations before they go live.
+          </p>
+        </div>
 
-          <div>
-            <label className="text-xs font-semibold text-text-dim uppercase tracking-widest mb-2 block">
-              Content
-            </label>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Paste your caption, tagline, or describe the design..."
-              rows={5}
-              className="w-full rounded-xl bg-surface-2 border border-border px-4 py-3 text-sm text-text placeholder:text-text-dim resize-none focus:outline-none focus:border-primary/50"
-            />
-          </div>
+        {/* Asset type tabs */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 24 }}>
+          {ASSET_TYPES.map((t) => (
+            <button key={t} onClick={() => setAssetType(t)} className={`bg-tab${assetType === t ? " sel" : ""}`}>
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </button>
+          ))}
+        </div>
 
-          <div>
-            <label className="text-xs font-semibold text-text-dim uppercase tracking-widest mb-2 block">
-              Upload Image (optional)
-            </label>
-            {imagePreview ? (
-              <div className="relative rounded-xl overflow-hidden border border-border">
-                <img src={imagePreview} alt="Preview" className="w-full h-40 object-cover" />
-                <button
-                  onClick={() => { setImagePreview(null); setImageBase64(null); }}
-                  className="absolute top-2 right-2 h-7 w-7 rounded-full bg-surface-2/90 flex items-center justify-center hover:bg-surface"
-                >
-                  <X className="h-4 w-4 text-text" />
-                </button>
+        {/* 2-col layout */}
+        <div className="bg-layout">
+
+          {/* Left: input */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ borderRadius: 20, border: "1px solid var(--line)", background: "var(--surface)", padding: "clamp(20px, 3vw, 28px)" }}>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 7 }}>Content</label>
+                <textarea
+                  className="gf-field"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Paste your caption, tagline, or describe the design..."
+                  style={{ minHeight: 120, resize: "vertical", fontFamily: "'General Sans', sans-serif" }}
+                />
               </div>
-            ) : (
-              <button
-                onClick={() => fileRef.current?.click()}
-                className="w-full h-32 rounded-xl border border-dashed border-border bg-surface-2 hover:border-primary/40 flex flex-col items-center justify-center gap-2 transition-all"
-              >
-                <Upload className="h-5 w-5 text-text-dim" />
-                <span className="text-sm text-text-muted">Drop image or click to upload</span>
-              </button>
-            )}
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-            />
-          </div>
 
-          <button
-            onClick={handleSubmit}
-            disabled={loading || (!content && !imageBase64)}
-            className="w-full py-3 rounded-xl bg-gradient-brand text-white font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
-          >
-            {loading ? "Analyzing..." : "Run Guardian Check"}
-          </button>
-        </div>
-
-        {/* Result panel */}
-        <div className="space-y-4">
-          {!result && !loading && (
-            <div className="h-full flex items-center justify-center rounded-xl border border-dashed border-border bg-surface-2/30 p-8 text-center">
               <div>
-                <Shield className="h-12 w-12 text-text-dim mx-auto mb-3 opacity-30" />
-                <p className="text-text-dim text-sm">Results will appear here</p>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 7 }}>Visual asset (optional)</label>
+                {imagePreview ? (
+                  <div style={{ position: "relative", borderRadius: 14, overflow: "hidden", border: "1px solid var(--line)" }}>
+                    <img src={imagePreview} alt="Preview" style={{ width: "100%", height: 160, objectFit: "cover", display: "block" }} />
+                    <button
+                      onClick={() => { setImagePreview(null); setImageBase64(null); }}
+                      style={{ position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: "50%", background: "var(--surface)", border: "1px solid var(--line)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => fileRef.current?.click()}
+                    style={{ width: "100%", height: 120, borderRadius: 14, border: "1.5px dashed var(--line)", background: "var(--surf2)", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}
+                  >
+                    <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24" style={{ color: "var(--muted)" }}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                    <span style={{ fontFamily: "'General Sans'", fontSize: 13, color: "var(--muted)" }}>Upload image</span>
+                  </button>
+                )}
+                <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }}
+                  onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
               </div>
             </div>
-          )}
 
-          {loading && (
-            <div className="h-full flex items-center justify-center rounded-xl border border-border bg-surface-2/30 p-8">
-              <div className="text-center">
-                <div className="h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto mb-4" />
-                <p className="text-text-dim text-sm">Analyzing against Brand DNA...</p>
+            <button
+              onClick={handleSubmit}
+              disabled={loading || (!content && !imageBase64)}
+              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 9, padding: "15px 24px", borderRadius: 999, border: "none", background: "var(--sig)", color: "var(--onSig)", fontFamily: "'General Sans'", fontWeight: 600, fontSize: 15, cursor: loading || (!content && !imageBase64) ? "not-allowed" : "pointer", opacity: loading || (!content && !imageBase64) ? 0.6 : 1 }}
+            >
+              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              {loading ? "Analyzing…" : "Run Guardian Check"}
+            </button>
+          </div>
+
+          {/* Right: results */}
+          <div>
+            {!result && !loading && (
+              <div style={{ minHeight: 380, borderRadius: 20, border: "1.5px dashed var(--line)", background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
+                <svg width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.2" viewBox="0 0 24 24" style={{ color: "var(--muted)", opacity: .2 }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <p style={{ fontFamily: "'Newsreader', serif", fontSize: 14, color: "var(--muted)", margin: 0 }}>Results will appear here</p>
               </div>
-            </div>
-          )}
+            )}
 
-          {result && (
-            <div className="space-y-4">
-              {/* Overall score */}
-              <div className="rounded-xl bg-surface-2 border border-border p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="text-sm text-text-muted">Overall Score</p>
-                    <div className="flex items-baseline gap-2 mt-1">
-                      <span className="text-4xl font-bold text-text">{result.overall}</span>
-                      <span className={`text-2xl font-bold ${gradeColor(result.grade)}`}>
-                        Grade {result.grade}
-                      </span>
+            {loading && (
+              <div style={{ minHeight: 380, borderRadius: 20, border: "1px solid var(--line)", background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 14 }}>
+                <div style={{ width: 44, height: 44, borderRadius: "50%", border: "3px solid var(--line)", borderTop: "3px solid var(--sig)", animation: "ds-spin 1s linear infinite" }} />
+                <span style={{ fontFamily: "'General Sans'", fontSize: 14, color: "var(--muted)" }}>Analyzing against Brand DNA…</span>
+              </div>
+            )}
+
+            {result && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {/* Score card */}
+                <div style={{ borderRadius: 20, border: "1px solid var(--line)", background: "var(--surface)", padding: "clamp(18px, 2.5vw, 24px)" }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 8 }}>
+                    <span style={{ fontFamily: "'General Sans'", fontWeight: 700, fontSize: 52, lineHeight: 1, color: "var(--ink)" }}>{result.overall}</span>
+                    <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: 30, color: gradeColor(result.grade) }}>Grade {result.grade}</span>
+                  </div>
+                  <p style={{ fontFamily: "'Newsreader', serif", fontSize: 13, color: "var(--muted)", margin: "0 0 14px", lineHeight: 1.5 }}>{result.summary}</p>
+                  {Object.keys(result.scores).length > 0 && (
+                    <div style={{ display: "flex", gap: 14, flexWrap: "wrap", paddingTop: 14, borderTop: "1px solid var(--line)" }}>
+                      {Object.entries(result.scores).map(([key, val]) => (
+                        <ScoreRing key={key} score={val} label={key} />
+                      ))}
                     </div>
-                  </div>
-                  <div className="flex gap-4">
-                    {Object.entries(result.scores).map(([key, val]) => (
-                      <ScoreRing key={key} score={val} label={key.charAt(0).toUpperCase() + key.slice(1)} />
-                    ))}
-                  </div>
+                  )}
                 </div>
-                <p className="text-sm text-text-muted border-t border-border pt-3">{result.summary}</p>
-              </div>
 
-              {/* Violations */}
-              {result.violations.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-text-dim uppercase tracking-widest">
-                    Issues Found ({result.violations.length})
-                  </p>
-                  {result.violations.map((v, i) => {
-                    const cfg = severityConfig[v.severity];
-                    return (
-                      <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border ${cfg.bg} ${cfg.border}`}>
-                        <cfg.icon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${cfg.color}`} />
-                        <div>
-                          <p className={`text-xs font-semibold ${cfg.color}`}>{v.category}</p>
-                          <p className="text-sm text-text-muted mt-0.5">{v.message}</p>
+                {/* Violations */}
+                {result.violations.length > 0 && (
+                  <div style={{ borderRadius: 20, border: "1px solid var(--line)", background: "var(--surface)", padding: "18px 20px" }}>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: ".16em", textTransform: "uppercase" as const, color: "var(--muted)", marginBottom: 12 }}>
+                      Issues found ({result.violations.length})
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {result.violations.map((v, i) => (
+                        <div key={i} className="bg-row" style={{ animationDelay: `${i * 0.06}s`, display: "flex", gap: 10, padding: "10px 14px", borderRadius: 12, border: `1px solid color-mix(in oklab, ${severityColor(v.severity)} 25%, var(--line))`, background: `color-mix(in oklab, ${severityColor(v.severity)} 6%, var(--surface))` }}>
+                          <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>
+                            {v.severity === "high" ? "🔴" : v.severity === "medium" ? "🟡" : "🔵"}
+                          </span>
+                          <div>
+                            <div style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: 12, color: severityColor(v.severity), marginBottom: 2 }}>{v.category}</div>
+                            <div style={{ fontFamily: "'Newsreader', serif", fontSize: 13, color: "var(--ink)", lineHeight: 1.45 }}>{v.message}</div>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Suggestions */}
-              {result.suggestions?.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-text-dim uppercase tracking-widest">Suggestions</p>
-                  {result.suggestions.map((s, i) => (
-                    <div key={i} className="flex items-start gap-3 p-3 rounded-xl border border-green-500/20 bg-green-500/5">
-                      <CheckCircle className="h-4 w-4 mt-0.5 text-green-400 flex-shrink-0" />
-                      <p className="text-sm text-text-muted">{s}</p>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                  </div>
+                )}
+
+                {/* Suggestions */}
+                {result.suggestions?.length > 0 && (
+                  <div style={{ borderRadius: 20, border: "1px solid color-mix(in oklab, var(--sig) 25%, var(--line))", background: "color-mix(in oklab, var(--sig) 5%, var(--surface))", padding: "18px 20px" }}>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: ".16em", textTransform: "uppercase" as const, color: "var(--sig)", marginBottom: 12 }}>
+                      Suggestions ({result.suggestions.length})
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {result.suggestions.map((s, i) => (
+                        <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                          <svg width="14" height="14" fill="none" stroke="var(--sig)" strokeWidth="2" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: 2 }}><path d="M20 6L9 17l-5-5"/></svg>
+                          <span style={{ fontFamily: "'Newsreader', serif", fontSize: 14, color: "var(--ink)", lineHeight: 1.5 }}>{s}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

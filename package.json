@@ -24,7 +24,6 @@
     "autoprefixer": "^10.4.20",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
-    "framer-motion": "^11.18.2",
     "groq-sdk": "^0.14.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.475.0",

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Users, Star, MessageSquare, TrendingUp } from "lucide-react";
 
 interface Persona {
   name: string;
@@ -24,18 +23,26 @@ interface FocusGroupResult {
   recommendation: string;
 }
 
-const ASSET_TYPES = ["caption", "tagline", "logo description", "ad concept", "product name", "slogan"];
+const ASSET_TYPES = ["caption", "tagline", "ad concept", "brand concept", "product name", "slogan"];
+const AVATAR_COLORS = ["var(--sig)", "var(--terra)", "var(--olive)", "var(--leaf)", "var(--muted)"];
 
-function StarRating({ score }: { score: number }) {
+function ConsensusRing({ score }: { score: number }) {
+  const r = 38;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (score / 10) * circ;
+  const color = score >= 8 ? "var(--sig)" : score >= 6 ? "var(--olive)" : "var(--terra)";
   return (
-    <div className="flex items-center gap-0.5">
-      {Array.from({ length: 10 }).map((_, i) => (
-        <div
-          key={i}
-          className={`h-1.5 w-1.5 rounded-full ${i < score ? "bg-accent" : "bg-surface"}`}
-        />
-      ))}
-      <span className="text-xs text-text-dim ml-1">{score}/10</span>
+    <div style={{ position: "relative", width: 96, height: 96, flexShrink: 0 }}>
+      <svg viewBox="0 0 96 96" style={{ transform: "rotate(-90deg)", width: "100%", height: "100%" }}>
+        <circle cx="48" cy="48" r={r} fill="none" stroke="var(--surf2)" strokeWidth="6" />
+        <circle cx="48" cy="48" r={r} fill="none" stroke={color} strokeWidth="6"
+          strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
+          style={{ transition: "stroke-dashoffset 0.8s ease" }} />
+      </svg>
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 0 }}>
+        <span style={{ fontFamily: "'General Sans'", fontWeight: 700, fontSize: 22, color: "var(--ink)", lineHeight: 1 }}>{score?.toFixed(1)}</span>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "var(--muted)" }}>/10</span>
+      </div>
     </div>
   );
 }
@@ -63,122 +70,129 @@ export default function FocusGroupPage() {
     }
   };
 
-  return (
-    <div className="p-8 max-w-5xl mx-auto">
-      <div className="mb-8 flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-accent/20 flex items-center justify-center">
-          <Users className="h-5 w-5 text-accent" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-text">AI Focus Group</h1>
-          <p className="text-sm text-text-muted">5 synthetic Pakistani consumers react to your asset</p>
-        </div>
-      </div>
+  function initials(name: string) {
+    return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+  }
 
-      {/* Input */}
-      <div className="rounded-2xl bg-surface-2 border border-border p-6 mb-6 space-y-4">
-        <div className="flex gap-2 flex-wrap">
+  return (
+    <div style={{ padding: "clamp(24px, 3.5vw, 44px) clamp(20px, 4vw, 52px) 90px" }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: "clamp(26px, 4vh, 40px)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+            <span style={{ width: 38, height: 38, borderRadius: 11, background: "color-mix(in oklab, var(--terra) 14%, transparent)", color: "var(--terra)", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+            </span>
+            <h1 style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: "clamp(27px, 3.2vw, 40px)", lineHeight: 1.05, letterSpacing: "-0.03em", margin: 0 }}>
+              AI Focus <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, color: "var(--terra)" }}>Group</span>
+            </h1>
+          </div>
+          <p style={{ fontFamily: "'Newsreader', serif", fontSize: 17, lineHeight: 1.5, color: "var(--muted)", margin: 0, maxWidth: "56ch" }}>
+            Simulate <strong style={{ color: "var(--ink)", fontWeight: 600 }}>5 Pakistani audience personas</strong> reacting to your brand content.
+          </p>
+        </div>
+
+        {/* Type tabs */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
           {ASSET_TYPES.map((t) => (
-            <button
-              key={t}
-              onClick={() => setAssetType(t)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                assetType === t
-                  ? "bg-accent/20 border-accent/40 text-accent"
-                  : "bg-surface border-border text-text-muted hover:text-text"
-              }`}
-            >
+            <button key={t} onClick={() => setAssetType(t)} className={`fg-tab${assetType === t ? " sel" : ""}`}>
               {t.charAt(0).toUpperCase() + t.slice(1)}
             </button>
           ))}
         </div>
 
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder={`Enter your ${assetType} here...`}
-          rows={4}
-          className="w-full rounded-xl bg-surface border border-border px-4 py-3 text-sm text-text placeholder:text-text-dim resize-none focus:outline-none focus:border-primary/50"
-        />
-
-        <button
-          onClick={handleSubmit}
-          disabled={loading || !content.trim()}
-          className="px-6 py-2.5 rounded-xl bg-gradient-brand text-white text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
-        >
-          {loading ? "Gathering reactions..." : "Run Focus Group"}
-        </button>
-      </div>
-
-      {loading && (
-        <div className="flex flex-col items-center justify-center py-16 gap-4">
-          <div className="h-12 w-12 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-          <p className="text-text-dim text-sm">Assembling your Pakistani focus group...</p>
+        {/* Input */}
+        <div style={{ borderRadius: 20, border: "1px solid var(--line)", background: "var(--surface)", padding: "clamp(20px, 3vw, 28px)", marginBottom: 24 }}>
+          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 7 }}>Your content *</label>
+          <textarea
+            className="gf-field"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder={`Enter your ${assetType} here...`}
+            style={{ minHeight: 110, resize: "vertical", fontFamily: "'General Sans', sans-serif", marginBottom: 14 }}
+          />
+          <button
+            onClick={handleSubmit}
+            disabled={loading || !content.trim()}
+            style={{ display: "inline-flex", alignItems: "center", gap: 9, padding: "13px 24px", borderRadius: 999, border: "none", background: "var(--terra)", color: "#fff", fontFamily: "'General Sans'", fontWeight: 600, fontSize: 15, cursor: loading || !content.trim() ? "not-allowed" : "pointer", opacity: loading || !content.trim() ? 0.6 : 1 }}
+          >
+            <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>
+            {loading ? "Gathering reactions…" : "Run Focus Group"}
+          </button>
         </div>
-      )}
 
-      {result && (
-        <div className="space-y-6">
-          {/* Summary bar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="rounded-xl bg-surface-2 border border-border p-4 text-center">
-              <div className="text-3xl font-bold text-text">{result.averageScore?.toFixed(1)}</div>
-              <div className="text-xs text-text-dim mt-1">Avg Score /10</div>
-            </div>
-            <div className="rounded-xl bg-surface-2 border border-border p-4 col-span-3">
-              <p className="text-xs text-text-dim mb-1">Group Consensus</p>
-              <p className="text-sm text-text">{result.groupConsensus}</p>
-            </div>
-          </div>
-
-          {/* Personas grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {result.personas?.map((p, i) => (
-              <div key={i} className="rounded-2xl bg-surface-2 border border-border p-5 space-y-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-semibold text-text">{p.name}</h3>
-                    <p className="text-xs text-text-dim">{p.age}y · {p.city} · {p.occupation}</p>
-                  </div>
-                  <div className={`text-2xl font-bold ${p.score >= 7 ? "text-green-400" : p.score >= 5 ? "text-amber-400" : "text-red-400"}`}>
-                    {p.score}
-                  </div>
-                </div>
-
-                <StarRating score={p.score} />
-
-                <p className="text-xs text-text-muted leading-relaxed">{p.reaction}</p>
-
-                <div className="p-3 rounded-xl bg-surface border border-border">
-                  <MessageSquare className="h-3 w-3 text-text-dim mb-1" />
-                  <p className="text-xs italic text-text-muted">"{p.quote}"</p>
-                </div>
-
-                <div className="flex items-start gap-2">
-                  <TrendingUp className="h-3 w-3 text-primary-light mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-text-dim">{p.suggestion}</p>
-                </div>
-              </div>
+        {/* Loading */}
+        {loading && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "40px 0" }}>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="fg-blink" style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--terra)", animationDelay: `${i * 0.18}s` }} />
             ))}
+            <span style={{ fontFamily: "'General Sans'", fontSize: 14, color: "var(--muted)", marginLeft: 8 }}>Assembling your Pakistani focus group…</span>
           </div>
+        )}
 
-          {/* Final insights */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="rounded-xl bg-green-500/10 border border-green-500/20 p-4">
-              <p className="text-xs font-semibold text-green-400 mb-2">Top Strength</p>
-              <p className="text-sm text-text-muted">{result.topStrength}</p>
+        {/* Results */}
+        {result && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {/* Consensus */}
+            <div style={{ borderRadius: 20, border: "1px solid var(--line)", background: "var(--surface)", padding: "clamp(18px, 2.5vw, 24px)", display: "flex", gap: 24, alignItems: "center" }}>
+              <ConsensusRing score={result.averageScore} />
+              <div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: ".16em", textTransform: "uppercase" as const, color: "var(--muted)", marginBottom: 6 }}>Group consensus</div>
+                <p style={{ fontFamily: "'Newsreader', serif", fontSize: 16, lineHeight: 1.55, color: "var(--ink)", margin: 0 }}>{result.groupConsensus}</p>
+              </div>
             </div>
-            <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-4">
-              <p className="text-xs font-semibold text-red-400 mb-2">Top Concern</p>
-              <p className="text-sm text-text-muted">{result.topConcern}</p>
+
+            {/* Persona grid */}
+            <div className="fg-persona">
+              {result.personas?.map((p, i) => (
+                <div key={i} className="fg-card" style={{ animationDelay: `${i * 0.08}s` }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: AVATAR_COLORS[i % AVATAR_COLORS.length], display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <span style={{ fontFamily: "'General Sans'", fontWeight: 700, fontSize: 14, color: "#fff" }}>{initials(p.name)}</span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: 14, color: "var(--ink)" }}>{p.name}</div>
+                      <div style={{ fontFamily: "'Newsreader', serif", fontSize: 12, color: "var(--muted)" }}>{p.age}y · {p.city} · {p.occupation}</div>
+                    </div>
+                    <div style={{ fontFamily: "'General Sans'", fontWeight: 700, fontSize: 20, color: p.score >= 8 ? "var(--sig)" : p.score >= 5 ? "var(--olive)" : "var(--terra)", flexShrink: 0 }}>
+                      {p.score}<span style={{ fontSize: 11, fontWeight: 400, color: "var(--muted)" }}>/10</span>
+                    </div>
+                  </div>
+                  <p style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: 14, lineHeight: 1.5, color: "var(--ink)", margin: "0 0 8px", paddingLeft: 12, borderLeft: "2px solid var(--terra)" }}>"{p.quote}"</p>
+                  <p style={{ fontFamily: "'General Sans'", fontSize: 12, color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>{p.suggestion}</p>
+                </div>
+              ))}
             </div>
-            <div className="rounded-xl bg-primary/10 border border-primary/20 p-4">
-              <p className="text-xs font-semibold text-primary-light mb-2">Recommendation</p>
-              <p className="text-sm text-text-muted">{result.recommendation}</p>
+
+            {/* Insights */}
+            <div className="fg-insights" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+              <div style={{ borderRadius: 16, border: "1px solid color-mix(in oklab, var(--sig) 25%, var(--line))", background: "color-mix(in oklab, var(--sig) 5%, var(--surface))", padding: "16px 18px" }}>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--sig)", marginBottom: 6 }}>Top Strength</div>
+                <p style={{ fontFamily: "'Newsreader', serif", fontSize: 14, color: "var(--ink)", margin: 0, lineHeight: 1.5 }}>{result.topStrength}</p>
+              </div>
+              <div style={{ borderRadius: 16, border: "1px solid color-mix(in oklab, var(--terra) 25%, var(--line))", background: "color-mix(in oklab, var(--terra) 5%, var(--surface))", padding: "16px 18px" }}>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--terra)", marginBottom: 6 }}>Top Concern</div>
+                <p style={{ fontFamily: "'Newsreader', serif", fontSize: 14, color: "var(--ink)", margin: 0, lineHeight: 1.5 }}>{result.topConcern}</p>
+              </div>
+              <div style={{ borderRadius: 16, border: "1px solid var(--line)", background: "var(--surface)", padding: "16px 18px" }}>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--muted)", marginBottom: 6 }}>Recommendation</div>
+                <p style={{ fontFamily: "'Newsreader', serif", fontSize: 14, color: "var(--ink)", margin: 0, lineHeight: 1.5 }}>{result.recommendation}</p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Empty state */}
+        {!result && !loading && (
+          <div style={{ textAlign: "center", padding: "50px 20px", border: "1.5px dashed var(--line)", borderRadius: 22, background: "var(--surface)" }}>
+            <span style={{ display: "inline-flex", width: 60, height: 60, borderRadius: 16, background: "color-mix(in oklab, var(--terra) 12%, transparent)", color: "var(--terra)", alignItems: "center", justifyContent: "center", fontSize: 28, marginBottom: 16 }}>👥</span>
+            <div style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: 20, marginBottom: 6 }}>Simulate your audience.</div>
+            <p style={{ fontFamily: "'Newsreader', serif", fontSize: 15, color: "var(--muted)", margin: 0 }}>Paste any brand content to see how 5 Pakistani personas would react.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Globe, AlertTriangle, Lightbulb, MapPin, CheckCircle } from "lucide-react";
 
 type CulturalFit = "excellent" | "good" | "neutral" | "risky" | "problematic";
 
@@ -25,19 +24,15 @@ interface CulturalResult {
   summary: string;
 }
 
-const fitConfig: Record<CulturalFit, { color: string; bg: string; border: string; label: string }> = {
-  excellent: { color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/30", label: "Excellent fit" },
-  good: { color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/30", label: "Good fit" },
-  neutral: { color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/30", label: "Neutral" },
-  risky: { color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/30", label: "Risky" },
-  problematic: { color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/30", label: "Problematic" },
+const fitConfig: Record<CulturalFit, { color: string; label: string }> = {
+  excellent: { color: "var(--sig)", label: "Excellent fit" },
+  good: { color: "var(--leaf)", label: "Good fit" },
+  neutral: { color: "var(--olive)", label: "Neutral" },
+  risky: { color: "var(--terra)", label: "Risky" },
+  problematic: { color: "var(--red)", label: "Problematic" },
 };
 
-const severityConfig = {
-  critical: { color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/30" },
-  warning: { color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/30" },
-  suggestion: { color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/30" },
-};
+const severityColor = { critical: "var(--red)", warning: "var(--terra)", suggestion: "var(--olive)" };
 
 const ASSET_TYPES = ["caption", "tagline", "ad copy", "campaign concept", "product name", "website copy"];
 
@@ -68,214 +63,205 @@ export default function CulturalCheckPage() {
   const fit = result ? fitConfig[result.culturalFit] ?? fitConfig.neutral : null;
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="mb-8 flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-rose-500/20 flex items-center justify-center">
-          <Globe className="h-5 w-5 text-rose-400" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-text">Cultural Check</h1>
-          <p className="text-sm text-text-muted">AI reviews content for Pakistani cultural sensitivity</p>
-        </div>
-      </div>
+    <div style={{ padding: "clamp(24px, 3.5vw, 44px) clamp(20px, 4vw, 52px) 90px" }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Input */}
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {ASSET_TYPES.map((t) => (
-              <button
-                key={t}
-                onClick={() => setAssetType(t)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                  assetType === t
-                    ? "bg-rose-500/20 border-rose-500/40 text-rose-300"
-                    : "bg-surface-2 border-border text-text-muted hover:text-text"
-                }`}
-              >
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </button>
-            ))}
+        {/* Header */}
+        <div style={{ marginBottom: "clamp(26px, 4vh, 40px)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+            <span style={{ width: 38, height: 38, borderRadius: 11, background: "color-mix(in oklab, var(--terra) 14%, transparent)", color: "var(--terra)", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+            </span>
+            <h1 style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: "clamp(27px, 3.2vw, 40px)", lineHeight: 1.05, letterSpacing: "-0.03em", margin: 0 }}>
+              Cultural <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, color: "var(--terra)" }}>Check</span>
+            </h1>
+          </div>
+          <p style={{ fontFamily: "'Newsreader', serif", fontSize: 17, lineHeight: 1.5, color: "var(--muted)", margin: 0, maxWidth: "56ch" }}>
+            AI reviews content for <strong style={{ color: "var(--ink)", fontWeight: 600 }}>Pakistani cultural sensitivity</strong> — regional, linguistic, religious.
+          </p>
+        </div>
+
+        {/* Type tabs */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+          {ASSET_TYPES.map((t) => (
+            <button key={t} onClick={() => setAssetType(t)} className={`cc-tab${assetType === t ? " sel" : ""}`}>
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {/* 2-col layout */}
+        <div className="cc-layout">
+
+          {/* Left: input */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ borderRadius: 20, border: "1px solid var(--line)", background: "var(--surface)", padding: "clamp(20px, 3vw, 28px)" }}>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 7 }}>Content *</label>
+                <textarea
+                  className="gf-field"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Paste your copy here — English, Urdu, or Roman Urdu all work..."
+                  style={{ minHeight: 140, resize: "vertical", fontFamily: "'General Sans', sans-serif" }}
+                />
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 7 }}>Target region</label>
+                <select
+                  value={targetRegion}
+                  onChange={(e) => setTargetRegion(e.target.value)}
+                  style={{ width: "100%", fontFamily: "'General Sans', sans-serif", fontSize: 15, color: "var(--ink)", background: "var(--field)", border: "1px solid var(--line)", borderRadius: 12, padding: "13px 15px", outline: "none", appearance: "none" as const, boxSizing: "border-box" as const }}
+                >
+                  <option>Pakistan (all provinces)</option>
+                  <option>Karachi</option>
+                  <option>Lahore</option>
+                  <option>Islamabad / Rawalpindi</option>
+                  <option>Peshawar / KPK</option>
+                  <option>Multan / South Punjab</option>
+                  <option>Interior Sindh</option>
+                </select>
+              </div>
+              <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+                <div
+                  onClick={() => setIncludeUrdu(!includeUrdu)}
+                  style={{ width: 36, height: 20, borderRadius: 999, background: includeUrdu ? "var(--terra)" : "var(--surf2)", border: "1px solid var(--line)", position: "relative", transition: "background .2s", cursor: "pointer", flexShrink: 0 }}
+                >
+                  <div style={{ position: "absolute", top: 2, left: includeUrdu ? "calc(100% - 18px)" : 2, width: 16, height: 16, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,.2)", transition: "left .2s" }} />
+                </div>
+                <span style={{ fontFamily: "'General Sans'", fontSize: 13, color: "var(--muted)" }}>Include Urdu translation suggestion</span>
+              </label>
+            </div>
+            <button
+              onClick={handleSubmit}
+              disabled={loading || !content.trim()}
+              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 9, padding: "15px 24px", borderRadius: 999, border: "none", background: "var(--terra)", color: "#fff", fontFamily: "'General Sans'", fontWeight: 600, fontSize: 15, cursor: loading || !content.trim() ? "not-allowed" : "pointer", opacity: loading || !content.trim() ? 0.6 : 1 }}
+            >
+              <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>
+              {loading ? "Analyzing cultural fit…" : "Run Cultural Check"}
+            </button>
           </div>
 
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Paste your copy here — English, Urdu, or Roman Urdu all work..."
-            rows={6}
-            className="w-full rounded-xl bg-surface-2 border border-border px-4 py-3 text-sm text-text placeholder:text-text-dim resize-none focus:outline-none focus:border-rose-500/40"
-          />
-
+          {/* Right: results */}
           <div>
-            <label className="text-xs font-semibold text-text-dim uppercase tracking-widest mb-2 block">
-              Target Region
-            </label>
-            <select
-              value={targetRegion}
-              onChange={(e) => setTargetRegion(e.target.value)}
-              className="w-full rounded-xl bg-surface-2 border border-border px-4 py-2.5 text-sm text-text focus:outline-none focus:border-rose-500/40"
-            >
-              <option>Pakistan (all provinces)</option>
-              <option>Karachi</option>
-              <option>Lahore</option>
-              <option>Islamabad / Rawalpindi</option>
-              <option>Peshawar / KPK</option>
-              <option>Multan / South Punjab</option>
-              <option>Interior Sindh</option>
-            </select>
-          </div>
-
-          <label className="flex items-center gap-3 cursor-pointer">
-            <div
-              onClick={() => setIncludeUrdu(!includeUrdu)}
-              className={`h-5 w-9 rounded-full transition-colors relative ${includeUrdu ? "bg-rose-500" : "bg-surface"}`}
-            >
-              <div className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${includeUrdu ? "translate-x-4" : "translate-x-0.5"}`} />
-            </div>
-            <span className="text-sm text-text-muted">Include Urdu translation suggestion</span>
-          </label>
-
-          <button
-            onClick={handleSubmit}
-            disabled={loading || !content.trim()}
-            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 text-white text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
-          >
-            {loading ? "Analyzing cultural fit..." : "Run Cultural Check"}
-          </button>
-        </div>
-
-        {/* Results */}
-        <div>
-          {!result && !loading && (
-            <div className="h-full flex items-center justify-center rounded-xl border border-dashed border-border bg-surface-2/20 p-8 text-center">
-              <div>
-                <Globe className="h-12 w-12 text-text-dim mx-auto mb-3 opacity-20" />
-                <p className="text-text-dim text-sm">Cultural analysis will appear here</p>
+            {!result && !loading && (
+              <div style={{ minHeight: 380, borderRadius: 20, border: "1.5px dashed var(--line)", background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
+                <svg width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.2" viewBox="0 0 24 24" style={{ color: "var(--muted)", opacity: .2 }}><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+                <p style={{ fontFamily: "'Newsreader', serif", fontSize: 14, color: "var(--muted)", margin: 0 }}>Cultural analysis will appear here</p>
               </div>
-            </div>
-          )}
-
-          {loading && (
-            <div className="flex flex-col items-center justify-center h-full min-h-48 gap-4">
-              <div className="h-10 w-10 rounded-full border-2 border-rose-400 border-t-transparent animate-spin" />
-              <p className="text-text-dim text-sm">Consulting Pakistani cultural guidelines...</p>
-            </div>
-          )}
-
-          {result && fit && (
-            <div className="space-y-4">
-              {/* Score */}
-              <div className={`rounded-xl border p-4 ${fit.bg} ${fit.border}`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-3xl font-bold text-text">{result.overallScore}</span>
-                      <span className={`text-sm font-semibold ${fit.color}`}>{fit.label}</span>
-                    </div>
-                    <p className="text-xs text-text-dim mt-0.5">Cultural Fit Score</p>
+            )}
+            {loading && (
+              <div style={{ minHeight: 380, borderRadius: 20, border: "1px solid var(--line)", background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 14 }}>
+                <div style={{ width: 44, height: 44, borderRadius: "50%", border: "3px solid var(--line)", borderTop: "3px solid var(--terra)", animation: "ds-spin 1s linear infinite" }} />
+                <span style={{ fontFamily: "'General Sans'", fontSize: 14, color: "var(--muted)" }}>Consulting Pakistani cultural guidelines…</span>
+              </div>
+            )}
+            {result && fit && (
+              <div className="cc-result" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {/* Score card */}
+                <div style={{ borderRadius: 20, border: `1px solid color-mix(in oklab, ${fit.color} 30%, var(--line))`, background: `color-mix(in oklab, ${fit.color} 6%, var(--surface))`, padding: "clamp(18px, 2.5vw, 24px)" }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 6 }}>
+                    <span style={{ fontFamily: "'General Sans'", fontWeight: 700, fontSize: 52, lineHeight: 1, color: "var(--ink)" }}>{result.overallScore}</span>
+                    <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: 22, color: fit.color }}>{fit.label}</span>
                   </div>
+                  <p style={{ fontFamily: "'Newsreader', serif", fontSize: 14, color: "var(--muted)", margin: 0, lineHeight: 1.55 }}>{result.summary}</p>
                 </div>
-                <p className="text-sm text-text-muted mt-3 border-t border-white/5 pt-3">{result.summary}</p>
-              </div>
-
-              {/* Flags */}
-              {result.flags?.length > 0 && (
-                <div className="space-y-2">
-                  {result.flags.map((f, i) => {
-                    const cfg = severityConfig[f.severity];
-                    return (
-                      <div key={i} className={`p-3 rounded-xl border ${cfg.bg} ${cfg.border} space-y-1`}>
-                        <div className="flex items-center gap-2">
-                          <AlertTriangle className={`h-3.5 w-3.5 ${cfg.color}`} />
-                          <span className={`text-xs font-semibold ${cfg.color}`}>{f.category} · {f.severity}</span>
+                {/* Flags */}
+                {result.flags?.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {result.flags.map((f, i) => (
+                      <div key={i} className="cc-row" style={{ animationDelay: `${i * 0.06}s`, borderRadius: 14, border: `1px solid color-mix(in oklab, ${severityColor[f.severity]} 22%, var(--line))`, background: `color-mix(in oklab, ${severityColor[f.severity]} 5%, var(--surface))`, padding: "12px 14px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                          <svg width="12" height="12" fill="none" stroke={severityColor[f.severity]} strokeWidth="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01"/></svg>
+                          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase" as const, color: severityColor[f.severity] }}>{f.category} · {f.severity}</span>
                         </div>
-                        <p className="text-sm text-text">{f.issue}</p>
-                        <p className="text-xs text-text-muted">{f.explanation}</p>
-                        <p className="text-xs text-text-dim border-t border-white/5 pt-1 mt-1">
-                          Fix: {f.fix}
-                        </p>
+                        <p style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: 13, color: "var(--ink)", margin: "0 0 3px" }}>{f.issue}</p>
+                        <p style={{ fontFamily: "'Newsreader', serif", fontSize: 12, color: "var(--muted)", margin: "0 0 5px", lineHeight: 1.45 }}>{f.explanation}</p>
+                        <p style={{ fontFamily: "'General Sans'", fontSize: 12, color: "var(--muted)", margin: 0, paddingTop: 6, borderTop: "1px solid var(--line)" }}>Fix: {f.fix}</p>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {result && (
-        <div className="mt-6 space-y-6">
-          {/* Regional breakdown */}
-          {result.regionalNotes && Object.keys(result.regionalNotes).length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-text-dim uppercase tracking-widest mb-3">Regional Reception</p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {Object.entries(result.regionalNotes).map(([city, note]) => (
-                  <div key={city} className="rounded-xl bg-surface-2 border border-border p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <MapPin className="h-3.5 w-3.5 text-text-dim" />
-                      <span className="text-xs font-semibold text-text capitalize">{city}</span>
-                    </div>
-                    <p className="text-xs text-text-muted">{note}</p>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Strengths + Opportunities */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {result.strengths?.length > 0 && (
-              <div className="rounded-xl bg-green-500/5 border border-green-500/20 p-4">
-                <p className="text-xs font-semibold text-green-400 mb-2">Cultural Strengths</p>
-                <ul className="space-y-1">
-                  {result.strengths.map((s, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-text-muted">
-                      <CheckCircle className="h-3.5 w-3.5 text-green-400 mt-0.5 flex-shrink-0" />
-                      {s}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {result.opportunities?.length > 0 && (
-              <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
-                <p className="text-xs font-semibold text-primary-light mb-2">Local Hook Opportunities</p>
-                <ul className="space-y-1">
-                  {result.opportunities.map((o, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-text-muted">
-                      <Lightbulb className="h-3.5 w-3.5 text-primary-light mt-0.5 flex-shrink-0" />
-                      {o}
-                    </li>
-                  ))}
-                </ul>
+                )}
               </div>
             )}
           </div>
-
-          {/* Urdu suggestions */}
-          {(result.urduSuggestion || result.romanUrduSuggestion) && (
-            <div className="rounded-xl bg-surface-2 border border-border p-4 space-y-3">
-              <p className="text-xs font-semibold text-text-dim uppercase tracking-widest">Language Variants</p>
-              {result.urduSuggestion && (
-                <div>
-                  <p className="text-xs text-text-dim mb-1">اردو</p>
-                  <p className="text-lg text-text" dir="rtl" style={{ fontFamily: "serif" }}>
-                    {result.urduSuggestion}
-                  </p>
-                </div>
-              )}
-              {result.romanUrduSuggestion && (
-                <div>
-                  <p className="text-xs text-text-dim mb-1">Roman Urdu</p>
-                  <p className="text-base text-text italic">{result.romanUrduSuggestion}</p>
-                </div>
-              )}
-            </div>
-          )}
         </div>
-      )}
+
+        {/* Below-fold results */}
+        {result && (
+          <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 20 }}>
+
+            {/* Regional notes */}
+            {result.regionalNotes && Object.keys(result.regionalNotes).length > 0 && (
+              <div style={{ borderRadius: 20, border: "1px solid var(--line)", background: "var(--surface)", padding: "clamp(18px, 2.5vw, 24px)" }}>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: ".16em", textTransform: "uppercase" as const, color: "var(--muted)", marginBottom: 14 }}>Regional Reception</div>
+                <div className="cc-regional" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+                  {Object.entries(result.regionalNotes).map(([city, note]) => (
+                    <div key={city} style={{ borderRadius: 14, border: "1px solid var(--line)", background: "var(--surf2)", padding: "14px 16px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                        <svg width="12" height="12" fill="none" stroke="var(--muted)" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: 12, color: "var(--ink)" }}>{city}</span>
+                      </div>
+                      <p style={{ fontFamily: "'Newsreader', serif", fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.45 }}>{note}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Strengths + Opportunities */}
+            {(result.strengths?.length > 0 || result.opportunities?.length > 0) && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                {result.strengths?.length > 0 && (
+                  <div style={{ borderRadius: 18, border: "1px solid color-mix(in oklab, var(--sig) 25%, var(--line))", background: "color-mix(in oklab, var(--sig) 5%, var(--surface))", padding: "18px 20px" }}>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--sig)", marginBottom: 10 }}>Cultural Strengths</div>
+                    <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
+                      {result.strengths.map((s, i) => (
+                        <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                          <svg width="13" height="13" fill="none" stroke="var(--sig)" strokeWidth="2" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: 2 }}><path d="M20 6L9 17l-5-5"/></svg>
+                          <span style={{ fontFamily: "'Newsreader', serif", fontSize: 13, color: "var(--ink)", lineHeight: 1.5 }}>{s}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {result.opportunities?.length > 0 && (
+                  <div style={{ borderRadius: 18, border: "1px solid color-mix(in oklab, var(--olive) 25%, var(--line))", background: "color-mix(in oklab, var(--olive) 5%, var(--surface))", padding: "18px 20px" }}>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--olive)", marginBottom: 10 }}>Local Hook Opportunities</div>
+                    <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
+                      {result.opportunities.map((o, i) => (
+                        <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                          <svg width="13" height="13" fill="none" stroke="var(--olive)" strokeWidth="2" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: 2 }}><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                          <span style={{ fontFamily: "'Newsreader', serif", fontSize: 13, color: "var(--ink)", lineHeight: 1.5 }}>{o}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Urdu suggestions */}
+            {(result.urduSuggestion || result.romanUrduSuggestion) && (
+              <div style={{ borderRadius: 20, border: "1px solid var(--line)", background: "var(--surface)", padding: "clamp(18px, 2.5vw, 24px)" }}>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: ".16em", textTransform: "uppercase" as const, color: "var(--muted)", marginBottom: 14 }}>Language Variants</div>
+                {result.urduSuggestion && (
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "var(--muted)", marginBottom: 5 }}>اردو</div>
+                    <p style={{ fontFamily: "'Newsreader', serif", fontSize: 20, lineHeight: 1.8, color: "var(--ink)", margin: 0, direction: "rtl", textAlign: "right" }}>{result.urduSuggestion}</p>
+                  </div>
+                )}
+                {result.romanUrduSuggestion && (
+                  <div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "var(--muted)", marginBottom: 5 }}>Roman Urdu</div>
+                    <p style={{ fontFamily: "'Newsreader', serif", fontStyle: "italic", fontSize: 16, color: "var(--ink)", margin: 0 }}>{result.romanUrduSuggestion}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
