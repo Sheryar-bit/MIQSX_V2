@@ -103,15 +103,22 @@ export const authOptions: NextAuthOptions = {
       if (trigger === "update") {
         try {
           await connectDB();
-          // Switch workspace via update({ activeOrgId }) — only if a member.
-          const requestedOrg = (session as { activeOrgId?: string } | undefined)?.activeOrgId;
-          if (requestedOrg && token.id) {
-            const m = await Membership.findOne({ userId: token.id, orgId: requestedOrg });
-            if (m) token.activeOrgId = requestedOrg;
+          const s = session as { activeOrgId?: string; name?: string } | undefined;
+          // Switch workspace.
+          if (s?.activeOrgId && token.id) {
+            const m = await Membership.findOne({ userId: token.id, orgId: s.activeOrgId });
+            if (m) token.activeOrgId = s.activeOrgId;
           }
-          // Re-sync plan from the active workspace (e.g. right after an upgrade).
+          // Re-sync name if provided (e.g. after profile save).
+          if (s?.name) token.name = s.name;
+          // Re-sync plan from the active workspace.
           const activeOrg = token.activeOrgId;
           if (activeOrg) token.plan = await orgPlan(activeOrg);
+          // Always re-read name from DB so it stays current.
+          if (token.id) {
+            const u = await User.findById(token.id).select("name");
+            if (u?.name) token.name = u.name;
+          }
         } catch {
           /* keep existing token values */
         }

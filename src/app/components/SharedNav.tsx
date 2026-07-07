@@ -87,25 +87,25 @@ export default function SharedNav({ dark, setDark }: Props) {
           <button
             onClick={() => setDark(d => !d)}
             aria-label="Toggle theme"
-            style={{ position: 'relative', width: 54, height: 29, borderRadius: 999, border: '1px solid var(--border, rgba(33,28,18,0.16))', background: 'var(--sand, #EDE4D3)', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
+            style={{ position: 'relative', width: 54, height: 29, borderRadius: 999, border: `1px solid ${dark ? 'rgba(243,238,223,0.2)' : 'rgba(33,28,18,0.16)'}`, background: dark ? 'rgba(243,238,223,0.12)' : '#EDE4D3', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
             className="snav-toggle"
           >
-            <span style={{ position: 'absolute', left: 8, fontSize: 11, opacity: .7 }}>☀</span>
-            <span style={{ position: 'absolute', right: 8, fontSize: 10, opacity: .7 }}>☾</span>
-            <span style={{ position: 'absolute', top: 3, left: dark ? 28 : 3, width: 23, height: 23, borderRadius: '50%', background: 'var(--ink, #211C12)', transition: 'left .4s cubic-bezier(.6,0,.2,1)' }} />
+            <span style={{ position: 'absolute', left: 8, fontSize: 11, opacity: .7, color: dark ? '#F3EEDF' : '#211C12' }}>☀</span>
+            <span style={{ position: 'absolute', right: 8, fontSize: 10, opacity: .7, color: dark ? '#F3EEDF' : '#211C12' }}>☾</span>
+            <span style={{ position: 'absolute', top: 3, left: dark ? 28 : 3, width: 23, height: 23, borderRadius: '50%', background: dark ? '#F3EEDF' : '#211C12', transition: 'left .4s cubic-bezier(.6,0,.2,1)' }} />
           </button>
 
           {status === 'loading' ? (
-            <span style={{ display: 'inline-block', width: 80, height: 36, borderRadius: 999, background: 'var(--line, rgba(33,28,18,0.11))', opacity: 0.5 }} />
+            <span style={{ display: 'inline-block', width: 80, height: 36, borderRadius: 999, background: dark ? 'rgba(243,238,223,0.15)' : 'rgba(33,28,18,0.1)', opacity: 0.5 }} />
           ) : loggedIn ? (
             <>
-              <a href="/dashboard" style={{ textDecoration: 'none', color: 'var(--paper, #F6EFE1)', fontSize: 15, fontWeight: 600, padding: '11px 22px', borderRadius: 999, background: 'var(--ink, #211C12)', whiteSpace: 'nowrap' }} className="snav-cta">Dashboard</a>
-              <a href="/profile" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: '50%', background: 'var(--sig, #2F5A48)', color: 'var(--onSig, #fff)', fontSize: 13, fontWeight: 700, textDecoration: 'none', flexShrink: 0 }} title="Profile">
+              <a href="/dashboard" style={{ textDecoration: 'none', color: dark ? '#211C12' : '#F6EFE1', fontSize: 15, fontWeight: 600, padding: '11px 22px', borderRadius: 999, background: dark ? '#F3EEDF' : '#211C12', whiteSpace: 'nowrap' }} className="snav-cta">Dashboard</a>
+              <a href="/profile" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: '50%', background: 'var(--sig, #2F5A48)', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', flexShrink: 0 }} title="Profile">
                 {initials}
               </a>
             </>
           ) : (
-            <a href="/auth/signup" style={{ textDecoration: 'none', color: 'var(--paper, #F6EFE1)', fontSize: 15, fontWeight: 600, padding: '11px 22px', borderRadius: 999, background: 'var(--ink, #211C12)', whiteSpace: 'nowrap' }} className="snav-cta">Start free</a>
+            <a href="/auth/signup" style={{ textDecoration: 'none', color: dark ? '#211C12' : '#F6EFE1', fontSize: 15, fontWeight: 600, padding: '11px 22px', borderRadius: 999, background: dark ? '#F3EEDF' : '#211C12', whiteSpace: 'nowrap' }} className="snav-cta">Start free</a>
           )}
 
           <button

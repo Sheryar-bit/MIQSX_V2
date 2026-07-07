@@ -1,12 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTheme } from '../hooks/useTheme';
 import './how-it-works.css';
 import SharedNav from '../components/SharedNav';
 import MarketingFooter from '../components/MarketingFooter';
 
 export default function HowItWorksPage() {
-  const [dark, setDark] = useState(false);
-  const theme = dark ? 'dark' : 'light';
+  const [dark, setDark] = useTheme();
 
   useEffect(() => {
     document.querySelectorAll('[data-draw]').forEach(p => {
@@ -34,7 +34,7 @@ export default function HowItWorksPage() {
   ];
 
   return (
-    <div data-theme={theme} style={{ minHeight:'100vh' }}>
+    <div style={{ minHeight:'100vh' }}>
       <div data-root style={{ position:'relative', background:'var(--bg)', color:'var(--ink)', fontFamily:"'General Sans', system-ui, sans-serif", minHeight:'100vh', overflowX:'hidden', WebkitFontSmoothing:'antialiased' }}>
         <div className="hw-grain" aria-hidden="true" />
 

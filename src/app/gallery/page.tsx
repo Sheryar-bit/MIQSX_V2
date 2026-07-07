@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTheme } from '../hooks/useTheme';
 import './gallery.css';
 import SharedNav from '../components/SharedNav';
 import MarketingFooter from '../components/MarketingFooter';
@@ -69,12 +70,11 @@ const STYLE_CHIPS = ['All','Minimalist','Vintage','Neon','Flat','3D','Watercolor
 const BRAND_CHIPS = ['All','Saha Bakery','Zara Threads','Chai Co.','Nuxe Tech'];
 
 export default function GalleryPage() {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useTheme();
   const [fType, setFType] = useState('All');
   const [fStyle, setFStyle] = useState('All');
   const [fBrand, setFBrand] = useState('All');
   const [openBrand, setOpenBrand] = useState<string | null>(null);
-  const theme = dark ? 'dark' : 'light';
 
   const vpRef = useRef<HTMLDivElement>(null);
   const boardRef = useRef<HTMLDivElement>(null);
@@ -284,7 +284,7 @@ export default function GalleryPage() {
   }
 
   return (
-    <div data-theme={theme} style={{ minHeight:'100vh' }}>
+    <div style={{ minHeight:'100vh' }}>
       <div data-root style={{ position:'relative', background:'var(--bg)', color:'var(--ink)', fontFamily:"'General Sans', system-ui, sans-serif", minHeight:'100vh', overflowX:'hidden', WebkitFontSmoothing:'antialiased' }}>
         <div className="gl-grain" aria-hidden="true" />
 

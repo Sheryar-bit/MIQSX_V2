@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 
 interface Profile {
   name: string;
@@ -14,6 +15,7 @@ interface Profile {
 const ACCENTS = ["#C26B43", "#1E5A40", "#5C79C4", "#C2557A", "#8A8A4C"];
 
 export default function ProfilePage() {
+  const { update: updateSession } = useSession();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -54,6 +56,8 @@ export default function ProfilePage() {
         setNotice(d.error || "Could not save");
       } else {
         if (d.profileSlug) setSlug(d.profileSlug);
+        // Refresh JWT so sidebar/nav show the updated name immediately.
+        await updateSession({ name: d.name ?? name });
         setToast(false);
         requestAnimationFrame(() => setToast(true));
         setTimeout(() => setToast(false), 2700);

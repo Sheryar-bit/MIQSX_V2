@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useTheme } from './hooks/useTheme';
 import './home.css';
 
 const MARQUEE_SEG = 'BRAND DNA · CONSISTENCY · URDU + ENGLISH · ONE SYSTEM · ';
@@ -17,10 +18,9 @@ const FAQ_DATA = [
 const SP = () => <path d="M20 0c3 13 7 17 20 20-13 3-17 7-20 20-3-13-7-17-20-20C13 17 17 13 20 0Z"/>;
 
 export default function HomePage() {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useTheme();
   const [openFaq, setOpenFaq] = useState(0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const theme = dark ? 'dark' : 'light';
   const year = new Date().getFullYear();
   const { data: session, status } = useSession();
   const loggedIn = status === 'authenticated';
@@ -150,7 +150,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div data-theme={theme} style={{ backgroundColor: 'var(--paper)', backgroundImage: 'radial-gradient(var(--line) 1.1px, transparent 1.1px)', backgroundSize: '30px 30px', color: 'var(--ink)', fontFamily: "'Schibsted Grotesk', system-ui, sans-serif", minHeight: '100vh', overflowX: 'hidden', transition: 'background .6s cubic-bezier(.6,0,.2,1), color .6s cubic-bezier(.6,0,.2,1)', WebkitFontSmoothing: 'antialiased' } as React.CSSProperties}>
+    <div style={{ backgroundColor: 'var(--paper)', backgroundImage: 'radial-gradient(var(--line) 1.1px, transparent 1.1px)', backgroundSize: '30px 30px', color: 'var(--ink)', fontFamily: "'Schibsted Grotesk', system-ui, sans-serif", minHeight: '100vh', overflowX: 'hidden', transition: 'background .6s cubic-bezier(.6,0,.2,1), color .6s cubic-bezier(.6,0,.2,1)', WebkitFontSmoothing: 'antialiased' } as React.CSSProperties}>
 
       {/* NAV */}
       <nav id="mqsx-nav" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px clamp(20px, 5vw, 60px)', transition: 'background .4s ease, backdrop-filter .4s ease, box-shadow .4s ease, padding .4s ease', borderBottom: '1px solid transparent' } as React.CSSProperties}>

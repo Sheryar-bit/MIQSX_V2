@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useTheme } from '../hooks/useTheme';
 import './features.css';
 import SharedNav from '../components/SharedNav';
 import MarketingFooter from '../components/MarketingFooter';
@@ -16,10 +17,9 @@ const DIRS = ['ltr', 'rtl', 'ltr'] as const;
 const FONTS = ["'General Sans'", "'Newsreader', serif", "'General Sans'"];
 
 export default function FeaturesPage() {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useTheme();
   const [langIdx, setLangIdx] = useState(0);
   const langLoopRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const theme = dark ? 'dark' : 'light';
 
   const startLangLoop = () => {
     if (langLoopRef.current) return;
@@ -153,7 +153,7 @@ export default function FeaturesPage() {
   }
 
   return (
-    <div data-theme={theme} style={{ minHeight:'100vh' }}>
+    <div style={{ minHeight:'100vh' }}>
       <div data-root style={{ position:'relative', background:'var(--bg)', color:'var(--ink)', fontFamily:"'General Sans', system-ui, sans-serif", minHeight:'100vh', overflowX:'hidden', WebkitFontSmoothing:'antialiased' }}>
         <div className="fx-grain" aria-hidden="true" />
 
