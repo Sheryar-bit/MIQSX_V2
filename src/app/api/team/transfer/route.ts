@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import mongoose from "mongoose";
 import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/mongoose";
 import Membership from "@/models/Membership";
@@ -28,10 +29,31 @@ export async function POST(req: NextRequest) {
     const target = await Membership.findOne({ orgId, userId });
     if (!target) return NextResponse.json({ error: "That user isn't a member." }, { status: 404 });
 
-    // Promote target → owner, demote current owner → admin, update org.ownerId.
-    await Membership.updateOne({ orgId, userId }, { $set: { role: "owner" } });
-    await Membership.updateOne({ orgId, userId: session.user.id }, { $set: { role: "admin" } });
-    await Organization.updateOne({ _id: orgId }, { $set: { ownerId: userId } });
+    // All-or-nothing: promote target → owner, demote current owner → admin, and
+    // repoint org.ownerId in a single transaction so we can never end up with
+    // two owners or none. Falls back to sequential writes if transactions aren't
+    // supported by the deployment (e.g. a standalone mongod in local dev).
+    const currentOwnerId = session.user.id;
+    const dbSession = await mongoose.startSession();
+    try {
+      await dbSession.withTransaction(async () => {
+        await Membership.updateOne({ orgId, userId }, { $set: { role: "owner" } }, { session: dbSession });
+        await Membership.updateOne({ orgId, userId: currentOwnerId }, { $set: { role: "admin" } }, { session: dbSession });
+        await Organization.updateOne({ _id: orgId }, { $set: { ownerId: userId } }, { session: dbSession });
+      });
+    } catch (txErr) {
+      const code = (txErr as { code?: number }).code;
+      // 20 = "Transaction numbers are only allowed on a replica set" (standalone mongod).
+      if (code === 20 || code === 40415) {
+        await Membership.updateOne({ orgId, userId }, { $set: { role: "owner" } });
+        await Membership.updateOne({ orgId, userId: currentOwnerId }, { $set: { role: "admin" } });
+        await Organization.updateOne({ _id: orgId }, { $set: { ownerId: userId } });
+      } else {
+        throw txErr;
+      }
+    } finally {
+      await dbSession.endSession();
+    }
 
     await logAudit({
       orgId,

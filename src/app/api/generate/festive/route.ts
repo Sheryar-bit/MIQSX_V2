@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { enforceLimit } from "@/lib/usage";
+import { enforceOrgLimit } from "@/lib/org-context";
 import { trackEvent } from "@/lib/analytics";
 import { generateBrandImage, isCloudflareConfigured, FLUX_MODEL } from "@/lib/imagegen";
 
@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const limited = await enforceLimit(session.user.id, "festive");
-  if (limited) return limited;
+  const gate = await enforceOrgLimit(session, "festive");
+  if (!gate.ok) return gate.response;
 
   const prompt = FESTIVE_PROMPTS[festival as Festival](String(brandName).trim() || "Brand", primaryColor);
   const plan = session.user.plan ?? "free";
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       size: size === "story" ? "story" : "square",
     });
 
-    await trackEvent({ userId: session.user.id, feature: "festive", event: "festive.generated", step: 2 });
+    await trackEvent({ userId: session.user.id, orgId: gate.orgId, feature: "festive", event: "festive.generated", step: 2 });
     return NextResponse.json({ imageUrl, festival, prompt, model: FLUX_MODEL });
   } catch (err) {
     console.error("[FESTIVE]", err);

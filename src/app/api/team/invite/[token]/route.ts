@@ -63,6 +63,15 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ to
       return NextResponse.json({ error: "This invite has expired." }, { status: 410 });
     }
 
+    // The invite is bound to a specific email — a forwarded/leaked link can't be
+    // consumed by a different account.
+    if (session.user.email?.toLowerCase() !== invite.email) {
+      return NextResponse.json(
+        { error: "This invite was sent to a different email address." },
+        { status: 403 }
+      );
+    }
+
     const memberId = session.user.id;
     const org = await Organization.findById(invite.orgId);
     if (!org) return NextResponse.json({ error: "Workspace no longer exists." }, { status: 404 });
