@@ -33,12 +33,29 @@ export const authOptions: NextAuthOptions = {
         const email = credentials.email.toLowerCase().trim();
 
         // Dev-only convenience login — stripped out of production builds.
+        // Backed by a real DB user (find-or-create) so org-scoped features
+        // (workspaces, brands, quotas) behave exactly like production accounts;
+        // a hardcoded fake id would have no Membership and 403 every org guard.
         if (
           process.env.NODE_ENV !== "production" &&
           email === TEST_USER.email &&
           credentials.password === TEST_USER.password
         ) {
-          return { id: TEST_USER.id, email: TEST_USER.email, name: TEST_USER.name, plan: "free" };
+          await connectDB();
+          let testUser = await User.findOne({ email: TEST_USER.email });
+          if (!testUser) {
+            testUser = await User.create({
+              name: TEST_USER.name,
+              email: TEST_USER.email,
+              password: await bcrypt.hash(TEST_USER.password, 12),
+            });
+          }
+          return {
+            id: testUser._id.toString(),
+            email: testUser.email,
+            name: testUser.name,
+            plan: testUser.plan,
+          };
         }
 
         // Real users — look up in MongoDB and verify the bcrypt hash.

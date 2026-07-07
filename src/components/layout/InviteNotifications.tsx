@@ -28,18 +28,14 @@ export function InviteNotifications() {
         .catch(() => {});
 
     refresh();
-    // Poll so a freshly-sent invite appears without a manual refresh, and
-    // refetch whenever the user returns to the tab.
-    const interval = setInterval(refresh, 30_000);
-    const onFocus = () => document.visibilityState === "visible" && refresh();
-    document.addEventListener("visibilitychange", onFocus);
-    window.addEventListener("focus", refresh);
+    // Refetch only when the user returns to the tab — no background interval,
+    // so the endpoint isn't hit while they're just sitting on a page.
+    const onVisible = () => document.visibilityState === "visible" && refresh();
+    document.addEventListener("visibilitychange", onVisible);
 
     return () => {
       active = false;
-      clearInterval(interval);
-      document.removeEventListener("visibilitychange", onFocus);
-      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);
 
