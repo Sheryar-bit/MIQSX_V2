@@ -1,10 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Image as ImageIcon, Sparkles, Download, Package } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 
 const STYLES = [
   { id: "realism", label: "Realism", emoji: "📸" },
@@ -93,147 +89,161 @@ export default function ImageryPage() {
   }
 
   return (
-    <div className="p-8 max-w-5xl">
-      <div className="mb-8 flex items-center gap-3">
-        <ImageIcon className="h-6 w-6 text-blue-400" />
-        <div>
-          <h1 className="text-3xl font-bold text-text">Post Imagery</h1>
-          <p className="text-text-muted text-sm mt-0.5">FLUX.1 on Cloudflare Workers AI · 8 style filters · Brand DNA auto-injected</p>
+    <div style={{ padding: "clamp(24px, 3.5vw, 44px) clamp(20px, 4vw, 52px) 90px" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: "clamp(26px, 4vh, 40px)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+            <span style={{ width: 38, height: 38, borderRadius: 11, background: "color-mix(in oklab, var(--olive) 14%, transparent)", color: "var(--olive)", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            </span>
+            <h1 style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: "clamp(27px, 3.2vw, 40px)", lineHeight: 1.05, letterSpacing: "-0.03em", margin: 0 }}>
+              Post <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, color: "var(--sig)" }}>Imagery</span>
+            </h1>
+          </div>
+          <p style={{ fontFamily: "'Newsreader', serif", fontSize: 17, lineHeight: 1.5, color: "var(--muted)", margin: 0, maxWidth: "56ch" }}>
+            FLUX.1 on Cloudflare Workers AI · <strong style={{ color: "var(--ink)", fontWeight: 600 }}>8 style filters</strong> · Brand DNA auto-injected.
+          </p>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Controls */}
-        <div className="space-y-5">
-          <div className="rounded-2xl border border-border bg-surface p-6 space-y-4">
-            <Textarea
-              label="Describe the image *"
-              placeholder={'e.g. A bold café poster with the headline text "MORNING BREW" above a steaming latte'}
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              className="min-h-[90px]"
-            />
-            <p className="text-xs text-text-dim -mt-2">
-              💡 Want text on a poster? Put the exact words in quotes — e.g. a sign that says{" "}
-              <span className="text-text-muted">&quot;GRAND OPENING&quot;</span>. Keep it short (1–4 words) for the sharpest letters.
-            </p>
-
-            {/* Style filter */}
-            <div>
-              <label className="text-sm font-medium text-text-muted mb-2 block">Style filter</label>
-              <div className="grid grid-cols-4 gap-2">
-                {STYLES.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => setStyle(s.id)}
-                    className={cn(
-                      "flex flex-col items-center gap-1 py-2 px-1 rounded-xl border text-xs transition-all",
-                      style === s.id
-                        ? "border-primary/40 bg-primary/10 text-primary-light"
-                        : "border-border text-text-muted hover:border-border-light hover:text-text"
-                    )}
-                  >
-                    <span className="text-base">{s.emoji}</span>
-                    <span className="text-center leading-tight">{s.label}</span>
-                  </button>
-                ))}
+        {/* 2-col layout */}
+        <div className="pi-main" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28, alignItems: "start" }}>
+          {/* Left: controls */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ borderRadius: 20, border: "1px solid var(--line)", background: "var(--surface)", padding: "clamp(20px, 3vw, 28px)" }}>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 7 }}>Describe the image *</label>
+                <textarea
+                  className="gf-field"
+                  placeholder={'e.g. A bold café poster with "MORNING BREW" above a steaming latte'}
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  style={{ minHeight: 90, resize: "vertical", fontFamily: "'General Sans', sans-serif" }}
+                />
+                <p style={{ marginTop: 6, fontFamily: "'General Sans'", fontSize: 12, color: "var(--muted)" }}>
+                  💡 Want text? Put exact words in quotes — e.g. a sign that says &quot;GRAND OPENING&quot;. Keep it 1–4 words for sharp letters.
+                </p>
               </div>
+
+              {/* Style filter */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 10 }}>Style filter</label>
+                <div className="pi-styles" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+                  {STYLES.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => setStyle(s.id)}
+                      className={`pi-style${style === s.id ? " active" : ""}`}
+                    >
+                      <span style={{ fontSize: 20 }}>{s.emoji}</span>
+                      <span style={{ textAlign: "center", lineHeight: 1.2 }}>{s.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Aspect ratio */}
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 10 }}>Aspect ratio</label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  {SIZES.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => setSize(s.id)}
+                      className={`pi-ratio${size === s.id ? " active" : ""}`}
+                    >
+                      <div style={{ fontWeight: 600, fontSize: 13 }}>{s.label}</div>
+                      <div style={{ fontSize: 11, opacity: 0.65, marginTop: 2 }}>{s.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {error && (
+                <p style={{ marginBottom: 14, fontFamily: "'General Sans'", fontSize: 14, color: "var(--terra)", background: "color-mix(in oklab, var(--terra) 10%, var(--surface))", border: "1px solid color-mix(in oklab, var(--terra) 25%, var(--line))", borderRadius: 12, padding: "12px 16px" }}>{error}</p>
+              )}
+
+              <button
+                onClick={generate}
+                disabled={loading || !prompt.trim()}
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 9, padding: "13px 24px", borderRadius: 999, border: "none", background: "var(--sig)", color: "var(--onSig)", fontFamily: "'General Sans'", fontWeight: 600, fontSize: 15, cursor: loading || !prompt.trim() ? "not-allowed" : "pointer", opacity: loading || !prompt.trim() ? 0.6 : 1, width: "100%" }}
+              >
+                <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>
+                {loading ? "Generating with Workers AI…" : "Generate image"}
+              </button>
             </div>
 
-            {/* Size */}
-            <div>
-              <label className="text-sm font-medium text-text-muted mb-2 block">Aspect ratio</label>
-              <div className="grid grid-cols-2 gap-2">
-                {SIZES.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => setSize(s.id)}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-2 rounded-xl border text-sm transition-all text-left",
-                      size === s.id
-                        ? "border-primary/40 bg-primary/10 text-primary-light"
-                        : "border-border text-text-muted hover:border-border-light"
-                    )}
-                  >
-                    <div>
-                      <p className="font-medium text-xs">{s.label}</p>
-                      <p className="text-[10px] opacity-60">{s.desc}</p>
-                    </div>
-                  </button>
-                ))}
+            {/* Social Media Kit */}
+            {imageUrl && (
+              <div style={{ borderRadius: 20, border: "1px solid var(--line)", background: "var(--surface)", padding: "clamp(18px, 2.5vw, 24px)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ color: "var(--terra)" }}><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+                  <span style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: 14 }}>Social Media Kit</span>
+                </div>
+                <p style={{ fontFamily: "'General Sans'", fontSize: 12, color: "var(--muted)", marginBottom: 12 }}>Select formats to include in zip export:</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+                  {EXPORT_FORMATS.map((f) => (
+                    <label key={f.slug} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedFormats.includes(f.slug)}
+                        onChange={() => toggleFormat(f.slug)}
+                        style={{ accentColor: "var(--sig)" }}
+                      />
+                      <span style={{ fontFamily: "'General Sans'", fontSize: 13, color: "var(--muted)", flex: 1 }}>{f.label}</span>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "var(--muted)" }}>{f.size}</span>
+                    </label>
+                  ))}
+                </div>
+                <button
+                  onClick={exportKit}
+                  disabled={exporting || selectedFormats.length === 0}
+                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "11px 20px", borderRadius: 999, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--ink)", fontFamily: "'General Sans'", fontWeight: 600, fontSize: 14, cursor: exporting || selectedFormats.length === 0 ? "not-allowed" : "pointer", opacity: exporting || selectedFormats.length === 0 ? 0.6 : 1, width: "100%" }}
+                >
+                  <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                  {exporting ? "Exporting…" : `Export ${selectedFormats.length} format${selectedFormats.length !== 1 ? "s" : ""} as ZIP`}
+                </button>
               </div>
-            </div>
-
-            {error && (
-              <p className="text-sm text-error bg-error/10 border border-error/20 rounded-xl px-4 py-3">{error}</p>
             )}
-
-            <Button onClick={generate} loading={loading} disabled={!prompt.trim()} className="w-full" size="lg">
-              <Sparkles className="h-4 w-4" />
-              {loading ? "Generating with Workers AI..." : "Generate image"}
-            </Button>
           </div>
 
-          {/* Export kit */}
-          {imageUrl && (
-            <div className="rounded-2xl border border-border bg-surface p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <Package className="h-4 w-4 text-pink-400" />
-                <h3 className="font-semibold text-sm text-text">Social Media Kit</h3>
-              </div>
-              <p className="text-xs text-text-muted mb-3">Select formats to include in zip export:</p>
-              <div className="space-y-2 mb-4">
-                {EXPORT_FORMATS.map((f) => (
-                  <label key={f.slug} className="flex items-center gap-2.5 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={selectedFormats.includes(f.slug)}
-                      onChange={() => toggleFormat(f.slug)}
-                      className="rounded border-border accent-violet-500"
-                    />
-                    <span className="text-sm text-text-muted group-hover:text-text transition-colors flex-1">{f.label}</span>
-                    <span className="text-xs text-text-dim font-mono">{f.size}</span>
-                  </label>
-                ))}
-              </div>
-              <Button
-                onClick={exportKit}
-                loading={exporting}
-                disabled={selectedFormats.length === 0}
-                variant="outline"
-                className="w-full"
-              >
-                <Download className="h-4 w-4" />
-                {exporting ? "Exporting..." : `Export ${selectedFormats.length} format${selectedFormats.length !== 1 ? "s" : ""} as ZIP`}
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Preview */}
-        <div>
-          {imageUrl ? (
-            <div className="rounded-2xl border border-border overflow-hidden">
-              <img src={imageUrl} alt="Generated" className="w-full" />
-              <div className="p-4 bg-surface flex justify-between items-center">
-                <span className="text-xs text-text-dim capitalize">{style} · {size}</span>
-                <a href={imageUrl} download="generated.png" target="_blank" rel="noopener noreferrer">
-                  <Button size="sm" variant="outline">
-                    <Download className="h-3.5 w-3.5" />
+          {/* Right: preview */}
+          <div>
+            {imageUrl ? (
+              <div className="pi-result" style={{ borderRadius: 20, border: "1px solid var(--line)", overflow: "hidden" }}>
+                <img src={imageUrl} alt="Generated" style={{ width: "100%", display: "block" }} />
+                <div style={{ padding: "14px 18px", background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "var(--muted)", textTransform: "capitalize" }}>{style} · {size}</span>
+                  <a
+                    href={imageUrl}
+                    download="generated.png"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 14px", borderRadius: 999, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--ink)", fontFamily: "'General Sans'", fontWeight: 600, fontSize: 13, textDecoration: "none" }}
+                  >
+                    <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
                     Download
-                  </Button>
-                </a>
+                  </a>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-border min-h-[400px] flex items-center justify-center">
-              <div className="text-center">
-                <ImageIcon className="h-14 w-14 text-text-dim mx-auto mb-3" />
-                <p className="text-text-muted text-sm">Your generated image will appear here</p>
-                <p className="text-xs text-text-dim mt-1">Requires Cloudflare Workers AI keys in .env.local</p>
+            ) : (
+              <div style={{ borderRadius: 20, border: "1.5px dashed var(--line)", minHeight: 440, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface)", position: "relative", overflow: "hidden" }}>
+                {loading ? (
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, color-mix(in oklab, var(--sig) 10%, var(--surface)), color-mix(in oklab, var(--olive) 10%, var(--surface)))", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 14 }}>
+                    <div style={{ width: 48, height: 48, borderRadius: "50%", border: "3px solid var(--line)", borderTop: "3px solid var(--sig)", animation: "ds-spin 1s linear infinite" }} />
+                    <span style={{ fontFamily: "'General Sans'", fontSize: 14, color: "var(--muted)" }}>Generating with FLUX…</span>
+                  </div>
+                ) : (
+                  <div style={{ textAlign: "center" }}>
+                    <svg width="56" height="56" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" style={{ color: "var(--muted)", margin: "0 auto 14px", display: "block" }}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                    <p style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: 16, color: "var(--ink)", marginBottom: 6 }}>Your generated image will appear here</p>
+                    <p style={{ fontFamily: "'Newsreader', serif", fontSize: 14, color: "var(--muted)", margin: 0 }}>Requires Cloudflare Workers AI keys in .env.local</p>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
