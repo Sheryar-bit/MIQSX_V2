@@ -1,65 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Mail, Check, X } from "lucide-react";
-
-interface Invitation {
-  token: string;
-  role: string;
-  orgId: string;
-  workspaceName: string;
-  inviterName: string;
-}
+import { useInvitations, useWorkspaces, type Invitation } from "@/lib/hooks";
 
 export function InviteNotifications() {
   const { update } = useSession();
-  const [invites, setInvites] = useState<Invitation[]>([]);
+  const router = useRouter();
+  const { invitations, mutate: mutateInvites } = useInvitations();
+  const { mutate: mutateWorkspaces } = useWorkspaces();
   const [busy, setBusy] = useState("");
 
-  useEffect(() => {
-    let active = true;
-    const refresh = () =>
-      fetch("/api/invitations")
-        .then((r) => r.json())
-        .then((d) => {
-          if (active) setInvites(d.invitations ?? []);
-        })
-        .catch(() => {});
-
-    refresh();
-    // Poll so a freshly-sent invite appears without a manual refresh, and
-    // refetch whenever the user returns to the tab.
-    const interval = setInterval(refresh, 30_000);
-    const onFocus = () => document.visibilityState === "visible" && refresh();
-    document.addEventListener("visibilitychange", onFocus);
-    window.addEventListener("focus", refresh);
-
-    return () => {
-      active = false;
-      clearInterval(interval);
-      document.removeEventListener("visibilitychange", onFocus);
-      window.removeEventListener("focus", refresh);
-    };
-  }, []);
-
-  if (invites.length === 0) return null;
+  if (invitations.length === 0) return null;
 
   async function accept(inv: Invitation) {
     setBusy(inv.token);
     try {
       const res = await fetch(`/api/team/invite/${inv.token}`, { method: "POST" });
       if (res.ok) {
-        // Switch the session into the newly joined workspace, then reload so all
-        // data (sidebar, switcher, brands) reflects it.
+        // Switch into the new workspace + revalidate everything live (no reload).
         await update({ activeOrgId: inv.orgId });
-        window.location.reload();
+        await Promise.all([mutateInvites(), mutateWorkspaces()]);
+        router.refresh();
       } else {
-        const d = await res.json();
+        const d = await res.json().catch(() => ({}));
         alert(d.error || "Could not accept invite");
-        setBusy("");
       }
-    } catch {
+    } finally {
       setBusy("");
     }
   }
@@ -72,7 +41,11 @@ export function InviteNotifications() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: inv.token }),
       });
-      setInvites((prev) => prev.filter((i) => i.token !== inv.token));
+      // Optimistically drop it, then revalidate.
+      mutateInvites(
+        { invitations: invitations.filter((i) => i.token !== inv.token) },
+        { revalidate: true }
+      );
     } finally {
       setBusy("");
     }
@@ -80,7 +53,7 @@ export function InviteNotifications() {
 
   return (
     <div className="space-y-2">
-      {invites.map((inv) => (
+      {invitations.map((inv) => (
         <div
           key={inv.token}
           className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3"

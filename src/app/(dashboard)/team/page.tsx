@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import useSWR from "swr";
 import { Users, Mail, Clock, Shield, Copy, Check, Activity, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -39,39 +40,50 @@ function acceptUrl(token: string) {
 
 export default function TeamPage() {
   const router = useRouter();
-  const [members, setMembers] = useState<Member[]>([]);
-  const [invites, setInvites] = useState<Invite[]>([]);
-  const [activity, setActivity] = useState<ActivityEntry[]>([]);
-  const [myRole, setMyRole] = useState<string>("");
-  const [workspace, setWorkspace] = useState<{ name: string; plan: string } | null>(null);
+
+  // Live data — members/invites/activity auto-refresh so an accepted invite or
+  // a new member appears on its own, no manual reload.
+  const { data: mData, mutate: mutateMembers, isLoading } = useSWR<{
+    members: Member[];
+    myRole: string;
+    workspaceName?: string;
+    plan?: string;
+  }>("/api/team/members", { refreshInterval: 6000 });
+
+  const members = mData?.members ?? [];
+  const myRole = mData?.myRole ?? "";
+  const workspace = mData?.workspaceName ? { name: mData.workspaceName, plan: mData.plan ?? "free" } : null;
+  const canManage = myRole === "owner" || myRole === "admin";
+  const isOwner = myRole === "owner";
+
+  const { data: iData, mutate: mutateInvites } = useSWR<{ invites: Invite[] }>(
+    canManage ? "/api/team/invite" : null,
+    { refreshInterval: 10000 }
+  );
+  const invites = iData?.invites ?? [];
+
+  const { data: aData, mutate: mutateActivity } = useSWR<{ activity: ActivityEntry[] }>(
+    canManage ? "/api/team/activity" : null,
+    { refreshInterval: 10000 }
+  );
+  const activity = aData?.activity ?? [];
+
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("editor");
-  const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState("");
   const [locked, setLocked] = useState(false);
   const [copied, setCopied] = useState("");
   const [transferTo, setTransferTo] = useState("");
 
-  const canManage = myRole === "owner" || myRole === "admin";
-  const isOwner = myRole === "owner";
+  const loading = isLoading;
 
-  async function load() {
-    const mRes = await fetch("/api/team/members").then((r) => r.json());
-    if (mRes.members) setMembers(mRes.members);
-    if (mRes.myRole) setMyRole(mRes.myRole);
-    if (mRes.workspaceName) setWorkspace({ name: mRes.workspaceName, plan: mRes.plan });
-
-    // Only managers can list invites + activity (admin-gated endpoints).
-    if (mRes.myRole === "owner" || mRes.myRole === "admin") {
-      const [iRes, aRes] = await Promise.all([
-        fetch("/api/team/invite").then((r) => r.json()),
-        fetch("/api/team/activity").then((r) => r.json()),
-      ]);
-      if (iRes.invites) setInvites(iRes.invites);
-      if (aRes.activity) setActivity(aRes.activity);
+  function reloadAll() {
+    mutateMembers();
+    if (canManage) {
+      mutateInvites();
+      mutateActivity();
     }
-    setLoading(false);
   }
 
   async function leaveWorkspace() {
@@ -89,8 +101,10 @@ export default function TeamPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: transferTo }),
     });
-    if (res.ok) router.refresh(), load();
-    else setNotice((await res.json()).error || "Could not transfer");
+    if (res.ok) {
+      router.refresh();
+      reloadAll();
+    } else setNotice((await res.json()).error || "Could not transfer");
   }
 
   async function deleteWorkspace() {
@@ -99,10 +113,6 @@ export default function TeamPage() {
     if (res.ok) window.location.href = "/dashboard";
     else setNotice((await res.json()).error || "Could not delete");
   }
-
-  useEffect(() => {
-    load();
-  }, []);
 
   async function copyLink(token: string, key: string) {
     try {
@@ -134,7 +144,7 @@ export default function TeamPage() {
       } else {
         setNotice(`Invite created for ${d.email}. Use the “Copy link” button below to share it.`);
         setEmail("");
-        load();
+        reloadAll();
       }
     } catch {
       setNotice("Network error");
@@ -149,7 +159,7 @@ export default function TeamPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, role }),
     });
-    load();
+    reloadAll();
   }
 
   async function removeMember(userId: string) {
@@ -158,7 +168,7 @@ export default function TeamPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId }),
     });
-    load();
+    reloadAll();
   }
 
   const pending = invites.filter((i) => i.status === "pending");
