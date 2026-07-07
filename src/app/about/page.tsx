@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import './about.css';
-import MarketingNav from '../components/MarketingNav';
+import SharedNav from '../components/SharedNav';
 import MarketingFooter from '../components/MarketingFooter';
 
 export default function AboutPage() {
@@ -66,7 +66,7 @@ export default function AboutPage() {
       <div className="ab-root">
         <div className="ab-grain" aria-hidden="true"></div>
 
-        <MarketingNav dark={dark} setDark={setDark} current="/about" />
+        <SharedNav dark={dark} setDark={setDark} />
 
         {/* OPENING HEADER */}
         <header style={{ position: 'relative', zIndex: 10, padding: 'clamp(70px,15vh,170px) clamp(20px,5vw,60px) clamp(50px,9vh,110px)', textAlign: 'center', overflow: 'hidden' }}>

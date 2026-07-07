@@ -158,8 +158,8 @@ export default function HomePage() {
           <svg width="22" height="22" viewBox="0 0 40 40" fill="var(--terra)" aria-hidden="true"><SP /></svg>MIQSX
         </a>
         <div className="mqsx-navlinks" style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-          {(['How it works', 'Features', 'Gallery', 'Pricing'] as const).map((label, i) => (
-            <a key={i} href={['#how', '#features', '#gallery', '#pricing'][i]} style={{ textDecoration: 'none', color: 'var(--dim)', fontSize: '15px', fontWeight: 500, padding: '8px 14px', borderRadius: '9px' }}>{label}</a>
+          {([['About', '/about'], ['How it works', '/how-it-works'], ['Features', '/features'], ['Gallery', '/gallery'], ['Pricing', '/pricing']] as const).map(([label, href]) => (
+            <a key={href} href={href} style={{ textDecoration: 'none', color: 'var(--dim)', fontSize: '15px', fontWeight: 500, padding: '8px 14px', borderRadius: '9px' }}>{label}</a>
           ))}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '13px' }}>
@@ -199,8 +199,8 @@ export default function HomePage() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </button>
         </div>
-        {(['How it works', 'Features', 'Gallery', 'Pricing'] as const).map((label, i) => (
-          <a key={i} href={['#how', '#features', '#gallery', '#pricing'][i]} onClick={() => setMobileNavOpen(false)} style={{ textDecoration: 'none', color: 'var(--ink)', fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: '21px', letterSpacing: '-0.02em', padding: '14px 0', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {([['About', '/about'], ['How it works', '/how-it-works'], ['Features', '/features'], ['Gallery', '/gallery'], ['Pricing', '/pricing']] as const).map(([label, href]) => (
+          <a key={href} href={href} onClick={() => setMobileNavOpen(false)} style={{ textDecoration: 'none', color: 'var(--ink)', fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: '21px', letterSpacing: '-0.02em', padding: '14px 0', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             {label}<span style={{ color: 'var(--terra)', fontSize: '16px' }}>→</span>
           </a>
         ))}
@@ -571,7 +571,7 @@ export default function HomePage() {
           </blockquote>
           <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '11px', marginTop: '30px' }}>
             <span style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'var(--olive)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><svg width="16" height="16" viewBox="0 0 40 40" fill="var(--butter)"><SP /></svg></span>
-            <div style={{ textAlign: 'left' }}><div style={{ fontSize: '15px', fontWeight: 600 }}>The MIQSX team</div><div style={{ fontSize: '13px', color: 'var(--dim)' }}>Built in Lahore, for Pakistan&apos;s brands</div></div>
+            <div style={{ textAlign: 'left' }}><div style={{ fontSize: '15px', fontWeight: 600 }}>The MIQSX team</div><div style={{ fontSize: '13px', color: 'var(--dim)' }}>Built in Karachi · DHA Suffa University</div></div>
           </div>
         </div>
         <div data-reveal data-reveal-delay="120" className="mqsx-stats-grid" style={{ marginTop: 'clamp(48px, 7vh, 80px)', borderRadius: '22px', background: 'var(--ink)', color: 'var(--paper)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', overflow: 'hidden' }}>
@@ -734,37 +734,37 @@ export default function HomePage() {
       </section>
 
       {/* FOOTER */}
-      <footer style={{ position: 'relative', background: 'var(--ink)', color: 'var(--paper)', overflow: 'hidden' }}>
+      <footer style={{ position: 'relative', background: '#1A1510', color: '#F3EEDF', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.05) 1.1px, transparent 1.1px)', backgroundSize: '30px 30px', pointerEvents: 'none' }}></div>
         <svg className="mqsx-spin" width="150" height="150" viewBox="0 0 40 40" fill="rgba(255,255,255,0.04)" style={{ position: 'absolute', top: '30px', right: '4%' }} aria-hidden="true"><SP /></svg>
         <div style={{ position: 'relative', maxWidth: '1180px', margin: '0 auto', padding: 'clamp(48px, 7vh, 80px) clamp(20px, 5vw, 60px) 0', display: 'flex', flexWrap: 'wrap', gap: '40px', justifyContent: 'space-between' }}>
           <div style={{ maxWidth: '300px' }}>
-            <a href="#top" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'var(--paper)', fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: '24px', letterSpacing: '-0.02em', marginBottom: '14px' }}><svg width="22" height="22" viewBox="0 0 40 40" fill="var(--terra)"><SP /></svg>MIQSX</a>
-            <p style={{ fontFamily: "'Newsreader', serif", fontSize: '15px', lineHeight: 1.6, opacity: .68, margin: '0 0 18px' }}>The AI Brand Operating System. One Brand DNA — every asset stays on-brand.</p>
+            <a href="#top" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: '#F3EEDF', fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: '24px', letterSpacing: '-0.02em', marginBottom: '14px' }}><svg width="22" height="22" viewBox="0 0 40 40" fill="#C75D39"><SP /></svg>MIQSX</a>
+            <p style={{ fontFamily: "'Newsreader', serif", fontSize: '15px', lineHeight: 1.6, color: 'rgba(243,238,223,0.68)', margin: '0 0 18px' }}>The AI Brand Operating System. One Brand DNA — every asset stays on-brand.</p>
             <form onSubmit={e => e.preventDefault()} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.16)', borderRadius: '999px', padding: '5px 5px 5px 16px', maxWidth: '290px' }}>
-              <input type="email" placeholder="Monthly brand tips" style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', outline: 'none', color: 'var(--paper)', fontFamily: 'inherit', fontSize: '13.5px' }} />
-              <button type="submit" aria-label="Subscribe" style={{ flex: '0 0 auto', width: '34px', height: '34px', borderRadius: '50%', border: 'none', background: 'var(--terra)', color: '#fff', cursor: 'pointer', fontSize: '14px' }}>→</button>
+              <input type="email" placeholder="Monthly brand tips" style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', outline: 'none', color: '#F3EEDF', fontFamily: 'inherit', fontSize: '13.5px' }} />
+              <button type="submit" aria-label="Subscribe" style={{ flex: '0 0 auto', width: '34px', height: '34px', borderRadius: '50%', border: 'none', background: '#C75D39', color: '#fff', cursor: 'pointer', fontSize: '14px' }}>→</button>
             </form>
           </div>
           <div style={{ display: 'flex', gap: 'clamp(36px, 5vw, 64px)', flexWrap: 'wrap' }}>
             {[
-              { heading: 'Product', links: [{ label: 'How it works', href: '/how-it-works' }, { label: 'Features', href: '/features' }, { label: 'Gallery', href: '/gallery' }, { label: 'Pricing', href: '#pricing' }] },
-              { heading: 'Company', links: [{ label: 'FAQ', href: '#faq' }, { label: 'Contact', href: '#top' }, { label: 'Privacy', href: '#top' }] },
-              { heading: 'Social', links: [{ label: 'Instagram', href: '#top' }, { label: 'WhatsApp', href: '#top' }, { label: 'LinkedIn', href: '#top' }] },
+              { heading: 'Product', links: [{ label: 'How it works', href: '/how-it-works' }, { label: 'Features', href: '/features' }, { label: 'Gallery', href: '/gallery' }, { label: 'Pricing', href: '/pricing' }] },
+              { heading: 'Company', links: [{ label: 'About', href: '/about' }, { label: 'Dashboard', href: '/dashboard' }, { label: 'Sign in', href: '/auth/login' }] },
+              { heading: 'Social', links: [{ label: 'Instagram', href: '/' }, { label: 'WhatsApp', href: '/' }, { label: 'LinkedIn', href: '/' }] },
             ].map(col => (
               <div key={col.heading} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ fontSize: '12px', letterSpacing: '.12em', textTransform: 'uppercase', opacity: .5, marginBottom: '2px' }}>{col.heading}</div>
-                {col.links.map(link => <a key={link.label} href={link.href} style={{ textDecoration: 'none', color: 'var(--paper)', fontSize: '14px', opacity: .8 }}>{link.label}</a>)}
+                <div style={{ fontSize: '12px', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(243,238,223,0.45)', marginBottom: '2px' }}>{col.heading}</div>
+                {col.links.map(link => <a key={link.label} href={link.href} style={{ textDecoration: 'none', color: 'rgba(243,238,223,0.8)', fontSize: '14px' }}>{link.label}</a>)}
               </div>
             ))}
           </div>
         </div>
         <div style={{ position: 'relative', maxWidth: '1180px', margin: 'clamp(34px, 5vh, 56px) auto 0', padding: '0 clamp(20px, 5vw, 60px)', overflow: 'hidden' }}>
-          <div style={{ fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: 'clamp(74px, 19vw, 252px)', lineHeight: 0.8, letterSpacing: '-0.04em', color: 'transparent', WebkitTextStroke: '1.5px rgba(255,255,255,0.16)', whiteSpace: 'nowrap' } as React.CSSProperties}>MIQSX</div>
+          <div style={{ fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: 'clamp(74px, 19vw, 252px)', lineHeight: 0.8, letterSpacing: '-0.04em', color: 'transparent', WebkitTextStroke: '1.5px rgba(255,255,255,0.18)', whiteSpace: 'nowrap' } as React.CSSProperties}>MIQSX</div>
         </div>
-        <div style={{ position: 'relative', maxWidth: '1180px', margin: '0 auto', padding: '22px clamp(20px, 5vw, 60px) 32px', borderTop: '1px solid rgba(255,255,255,0.12)', display: 'flex', flexWrap: 'wrap', gap: '14px', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '13px', opacity: .58 }}>© {year} MIQSX — all rights reserved</span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', fontSize: '12px', padding: '7px 14px', borderRadius: '999px', border: '1px dashed rgba(255,255,255,0.3)', opacity: .85, transform: 'rotate(-2deg)' }}><svg width="12" height="12" viewBox="0 0 40 40" fill="var(--butter)"><SP /></svg> Made in Lahore · 🇵🇰</span>
+        <div style={{ position: 'relative', maxWidth: '1180px', margin: '0 auto', padding: '22px clamp(20px, 5vw, 60px) 32px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexWrap: 'wrap', gap: '14px', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '13px', color: 'rgba(243,238,223,0.55)' }}>© {year} MIQSX — all rights reserved</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', fontSize: '12px', color: 'rgba(243,238,223,0.8)', padding: '7px 14px', borderRadius: '999px', border: '1px dashed rgba(255,255,255,0.25)', transform: 'rotate(-2deg)' }}><svg width="12" height="12" viewBox="0 0 40 40" fill="#C75D39"><SP /></svg> Made in Karachi · DHA Suffa University · 🇵🇰</span>
         </div>
       </footer>
     </div>

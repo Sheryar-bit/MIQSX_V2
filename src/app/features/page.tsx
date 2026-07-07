@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import './features.css';
-import MarketingNav from '../components/MarketingNav';
+import SharedNav from '../components/SharedNav';
 import MarketingFooter from '../components/MarketingFooter';
 
 const MARQ_A = ('DNA · GUARDIAN · TRILINGUAL · LEARN · ').repeat(10);
@@ -157,7 +157,7 @@ export default function FeaturesPage() {
       <div data-root style={{ position:'relative', background:'var(--bg)', color:'var(--ink)', fontFamily:"'General Sans', system-ui, sans-serif", minHeight:'100vh', overflowX:'hidden', WebkitFontSmoothing:'antialiased' }}>
         <div className="fx-grain" aria-hidden="true" />
 
-        <MarketingNav dark={dark} setDark={setDark} current="/features" />
+        <SharedNav dark={dark} setDark={setDark} />
 
         {/* HERO */}
         <header id="top" style={{ position:'relative', zIndex:10, maxWidth:'1180px', margin:'0 auto', padding:'clamp(56px, 12vh, 130px) clamp(20px, 5vw, 60px) clamp(30px, 5vh, 60px)' }}>

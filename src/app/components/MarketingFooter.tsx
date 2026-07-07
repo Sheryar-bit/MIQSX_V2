@@ -18,7 +18,7 @@ export default function MarketingFooter() {
         <div style={{ display: 'flex', gap: 'clamp(36px,5vw,64px)', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, letterSpacing: '.12em', textTransform: 'uppercase' as const, color: 'rgba(243,238,223,0.45)' }}>Product</div>
-            {[['How it works', '/how-it-works'], ['Features', '/features'], ['Gallery', '/gallery'], ['Pricing', '/#pricing']].map(([l,h]) => (
+            {[['How it works', '/how-it-works'], ['Features', '/features'], ['Gallery', '/gallery'], ['Pricing', '/pricing']].map(([l,h]) => (
               <a key={h} href={h} style={{ textDecoration: 'none', color: 'rgba(243,238,223,0.8)', fontSize: 14 }}>{l}</a>
             ))}
           </div>
@@ -43,7 +43,7 @@ export default function MarketingFooter() {
         <span style={{ fontSize: 13, color: 'rgba(243,238,223,0.55)' }}>© {year} MIQSX — all rights reserved</span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12, color: 'rgba(243,238,223,0.8)', padding: '7px 14px', borderRadius: 999, border: '1px dashed rgba(255,255,255,0.25)', transform: 'rotate(-2deg)' }}>
           <svg width="12" height="12" viewBox="0 0 40 40" fill="#C75D39">{STAR}</svg>
-          Made in Lahore · 🇵🇰
+          Made in Karachi · DHA Suffa University · 🇵🇰
         </span>
       </div>
     </footer>

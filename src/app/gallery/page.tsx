@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import './gallery.css';
-import MarketingNav from '../components/MarketingNav';
+import SharedNav from '../components/SharedNav';
 import MarketingFooter from '../components/MarketingFooter';
 
 const BRANDS: Record<string, { swatches: string[]; font: string; tone: string[] }> = {
@@ -288,7 +288,7 @@ export default function GalleryPage() {
       <div data-root style={{ position:'relative', background:'var(--bg)', color:'var(--ink)', fontFamily:"'General Sans', system-ui, sans-serif", minHeight:'100vh', overflowX:'hidden', WebkitFontSmoothing:'antialiased' }}>
         <div className="gl-grain" aria-hidden="true" />
 
-        <MarketingNav dark={dark} setDark={setDark} current="/gallery" />
+        <SharedNav dark={dark} setDark={setDark} />
 
         {/* HEADER */}
         <header style={{ position:'relative', zIndex:10, maxWidth:'1180px', margin:'0 auto', padding:'clamp(48px, 10vh, 110px) clamp(20px, 5vw, 60px) clamp(28px, 5vh, 52px)' }}>

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import './how-it-works.css';
-import MarketingNav from '../components/MarketingNav';
+import SharedNav from '../components/SharedNav';
 import MarketingFooter from '../components/MarketingFooter';
 
 export default function HowItWorksPage() {
@@ -38,7 +38,7 @@ export default function HowItWorksPage() {
       <div data-root style={{ position:'relative', background:'var(--bg)', color:'var(--ink)', fontFamily:"'General Sans', system-ui, sans-serif", minHeight:'100vh', overflowX:'hidden', WebkitFontSmoothing:'antialiased' }}>
         <div className="hw-grain" aria-hidden="true" />
 
-        <MarketingNav dark={dark} setDark={setDark} current="/how-it-works" />
+        <SharedNav dark={dark} setDark={setDark} />
 
         {/* HERO */}
         <header style={{ position:'relative', zIndex:10, maxWidth:'1180px', margin:'0 auto', padding:'clamp(56px, 12vh, 130px) clamp(20px, 5vw, 60px) clamp(40px, 7vh, 80px)' }}>
