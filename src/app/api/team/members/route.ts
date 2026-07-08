@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/mongoose";
 import Membership from "@/models/Membership";
+import User from "@/models/User";
+import TeamInvite from "@/models/TeamInvite";
 import { getOrgContext, requireRole } from "@/lib/org-context";
 import { logAudit } from "@/lib/audit-log";
 
@@ -66,6 +68,17 @@ export async function DELETE(req: NextRequest) {
     if (res.deletedCount === 0) {
       return NextResponse.json({ error: "Member not found or is the owner" }, { status: 404 });
     }
+
+    // Fully revoke access: cancel any outstanding invites for this person so a
+    // stale invite/link can't be used to rejoin the workspace.
+    const removed = await User.findById(userId).select("email");
+    if (removed?.email) {
+      await TeamInvite.updateMany(
+        { orgId: guard.ctx.orgId, email: removed.email, status: "pending" },
+        { $set: { status: "cancelled" } }
+      );
+    }
+
     await logAudit({
       orgId: guard.ctx.orgId,
       actorId: session.user.id,

@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export type AuditAction =
   | "member.invited"
+  | "member.invite_revoked"
   | "member.joined"
   | "member.removed"
   | "member.role_changed"

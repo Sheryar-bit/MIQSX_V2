@@ -48,7 +48,7 @@ export default function TeamPage() {
     myRole: string;
     workspaceName?: string;
     plan?: string;
-  }>("/api/team/members", { refreshInterval: 6000 });
+  }>("/api/team/members", { refreshInterval: 4000, refreshWhenHidden: true });
 
   const members = mData?.members ?? [];
   const myRole = mData?.myRole ?? "";
@@ -58,13 +58,13 @@ export default function TeamPage() {
 
   const { data: iData, mutate: mutateInvites } = useSWR<{ invites: Invite[] }>(
     canManage ? "/api/team/invite" : null,
-    { refreshInterval: 10000 }
+    { refreshInterval: 4000, refreshWhenHidden: true }
   );
   const invites = iData?.invites ?? [];
 
   const { data: aData, mutate: mutateActivity } = useSWR<{ activity: ActivityEntry[] }>(
     canManage ? "/api/team/activity" : null,
-    { refreshInterval: 10000 }
+    { refreshInterval: 8000 }
   );
   const activity = aData?.activity ?? [];
 
@@ -112,6 +112,16 @@ export default function TeamPage() {
     const res = await fetch("/api/team/workspace", { method: "DELETE" });
     if (res.ok) window.location.href = "/dashboard";
     else setNotice((await res.json()).error || "Could not delete");
+  }
+
+  async function revokeInvite(inviteId: string) {
+    if (!confirm("Revoke this invite? The person will no longer be able to join with it.")) return;
+    await fetch("/api/team/invite", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ inviteId }),
+    });
+    reloadAll();
   }
 
   async function copyLink(token: string, key: string) {
@@ -254,22 +264,30 @@ export default function TeamPage() {
                       {i.role} · expires {new Date(i.expiresAt).toLocaleDateString()}
                     </p>
                   </div>
-                  {i.token && (
+                  <div className="flex items-center gap-4">
+                    {i.token && (
+                      <button
+                        onClick={() => copyLink(i.token!, i._id)}
+                        className="inline-flex items-center gap-1.5 text-xs text-primary-light hover:underline"
+                      >
+                        {copied === i._id ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" /> Copied
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" /> Copy invite link
+                          </>
+                        )}
+                      </button>
+                    )}
                     <button
-                      onClick={() => copyLink(i.token!, i._id)}
-                      className="inline-flex items-center gap-1.5 text-xs text-primary-light hover:underline"
+                      onClick={() => revokeInvite(i._id)}
+                      className="text-xs text-error hover:underline"
                     >
-                      {copied === i._id ? (
-                        <>
-                          <Check className="w-3.5 h-3.5" /> Copied
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5" /> Copy invite link
-                        </>
-                      )}
+                      Revoke
                     </button>
-                  )}
+                  </div>
                 </div>
               ))}
             </div>

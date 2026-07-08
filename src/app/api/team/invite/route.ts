@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
+import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/mongoose";
@@ -127,6 +128,45 @@ export async function GET() {
     return NextResponse.json({ invites });
   } catch (err) {
     console.error("[team invite GET]", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
+// DELETE /api/team/invite  { inviteId } — revoke a pending invite (admin+).
+// Cancelling it removes it from the invitee's join banner.
+export async function DELETE(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const guard = await requireRole(session, "admin");
+  if (!guard.ok) return guard.response;
+
+  try {
+    const { inviteId } = (await req.json()) as { inviteId?: string };
+    if (!inviteId || !mongoose.isValidObjectId(inviteId)) {
+      return NextResponse.json({ error: "Valid inviteId is required" }, { status: 400 });
+    }
+
+    await dbConnect();
+    const invite = await TeamInvite.findOneAndUpdate(
+      { _id: inviteId, orgId: guard.ctx.orgId, status: "pending" },
+      { $set: { status: "cancelled" } }
+    );
+    if (!invite) {
+      return NextResponse.json({ error: "Pending invite not found" }, { status: 404 });
+    }
+
+    await logAudit({
+      orgId: guard.ctx.orgId,
+      actorId: session.user.id,
+      actorName: session.user.name,
+      action: "member.invite_revoked",
+      detail: `revoked the invite to ${invite.email}`,
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("[team invite DELETE]", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

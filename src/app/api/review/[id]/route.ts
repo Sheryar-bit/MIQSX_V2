@@ -35,15 +35,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params;
   const body = await req.json();
 
-  // Commenting is allowed for any workspace member (incl. internal viewers/clients).
+  // Commenting is a write action → editor+ only. Viewers are strictly read-only.
   if (body.comment) {
-    const ctx = await getOrgContext(session);
-    if (!ctx) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const guard = await requireRole(session, "editor");
+    if (!guard.ok) return guard.response;
     const userEmail = session.user.email || "team@miqsx.com";
     try {
       await connectDB();
       const review = await Review.findOneAndUpdate(
-        scope(id, ctx.orgId),
+        scope(id, guard.ctx.orgId),
         {
           $push: {
             comments: {
