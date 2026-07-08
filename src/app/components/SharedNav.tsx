@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 
 const SP = () => <path d="M20 0c3 13 7 17 20 20-13 3-17 7-20 20-3-13-7-17-20-20C13 17 17 13 20 0Z"/>;
 
@@ -60,25 +61,25 @@ export default function SharedNav({ dark, setDark }: Props) {
 
   const linkStyle: React.CSSProperties = {
     textDecoration: 'none', color: 'var(--dim, #6F6857)', fontSize: 15,
-    fontWeight: 500, padding: '8px 14px', borderRadius: 9,
+    fontWeight: 500, padding: '8px 14px', borderRadius: 9, whiteSpace: 'nowrap',
   };
 
   return (
     <>
       <nav id="shared-nav" style={navStyle}>
-        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'var(--ink, #211C12)', fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: 23, letterSpacing: '-0.02em' }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'var(--ink, #211C12)', fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: 23, letterSpacing: '-0.02em' }}>
           <svg width="22" height="22" viewBox="0 0 40 40" fill="var(--terra, #C75D39)" aria-hidden="true"><SP /></svg>
           MIQSX
-        </a>
+        </Link>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 2 }} className="snav-links">
+        <div style={{ alignItems: 'center', gap: 2 }} className="snav-links">
           {navLinks.map(l => {
             const active = pathname === l.href;
             return (
-              <a key={l.href} href={l.href} style={{ ...linkStyle, color: active ? 'var(--ink, #211C12)' : 'var(--dim, #6F6857)', fontWeight: active ? 600 : 500, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Link key={l.href} href={l.href} style={{ ...linkStyle, color: active ? 'var(--ink, #211C12)' : 'var(--dim, #6F6857)', fontWeight: active ? 600 : 500, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 {active && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--terra, #C75D39)', flexShrink: 0, display: 'inline-block' }} />}
                 {l.label}
-              </a>
+              </Link>
             );
           })}
         </div>
@@ -99,13 +100,13 @@ export default function SharedNav({ dark, setDark }: Props) {
             <span style={{ display: 'inline-block', width: 80, height: 36, borderRadius: 999, background: dark ? 'rgba(243,238,223,0.15)' : 'rgba(33,28,18,0.1)', opacity: 0.5 }} />
           ) : loggedIn ? (
             <>
-              <a href="/dashboard" style={{ textDecoration: 'none', color: dark ? '#211C12' : '#F6EFE1', fontSize: 15, fontWeight: 600, padding: '11px 22px', borderRadius: 999, background: dark ? '#F3EEDF' : '#211C12', whiteSpace: 'nowrap' }} className="snav-cta">Dashboard</a>
-              <a href="/profile" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: '50%', background: 'var(--sig, #2F5A48)', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', flexShrink: 0 }} title="Profile">
+              <Link href="/dashboard" style={{ textDecoration: 'none', color: dark ? '#211C12' : '#F6EFE1', fontSize: 15, fontWeight: 600, padding: '11px 22px', borderRadius: 999, background: dark ? '#F3EEDF' : '#211C12', whiteSpace: 'nowrap' }} className="snav-cta">Dashboard</Link>
+              <Link href="/profile" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: '50%', background: 'var(--sig, #2F5A48)', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', flexShrink: 0 }} title="Profile">
                 {initials}
-              </a>
+              </Link>
             </>
           ) : (
-            <a href="/auth/signup" style={{ textDecoration: 'none', color: dark ? '#211C12' : '#F6EFE1', fontSize: 15, fontWeight: 600, padding: '11px 22px', borderRadius: 999, background: dark ? '#F3EEDF' : '#211C12', whiteSpace: 'nowrap' }} className="snav-cta">Start free</a>
+            <Link href="/auth/signup" style={{ textDecoration: 'none', color: dark ? '#211C12' : '#F6EFE1', fontSize: 15, fontWeight: 600, padding: '11px 22px', borderRadius: 999, background: dark ? '#F3EEDF' : '#211C12', whiteSpace: 'nowrap' }} className="snav-cta">Start free</Link>
           )}
 
           <button
@@ -123,9 +124,9 @@ export default function SharedNav({ dark, setDark }: Props) {
 
       <div className={`snav-drawer${open ? ' open' : ''}`} role="dialog" aria-modal="true" aria-label="Navigation">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 36 }}>
-          <a href="/" onClick={() => setOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'var(--ink, #211C12)', fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: 22, letterSpacing: '-0.02em' }}>
+          <Link href="/" onClick={() => setOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'var(--ink, #211C12)', fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: 22, letterSpacing: '-0.02em' }}>
             <svg width="20" height="20" viewBox="0 0 40 40" fill="var(--terra, #C75D39)" aria-hidden="true"><SP /></svg>MIQSX
-          </a>
+          </Link>
           <button onClick={() => setOpen(false)} aria-label="Close" style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid var(--border, rgba(33,28,18,0.16))', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink, #211C12)', flexShrink: 0 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </button>
@@ -134,26 +135,26 @@ export default function SharedNav({ dark, setDark }: Props) {
         {navLinks.map(l => {
           const active = pathname === l.href;
           return (
-            <a key={l.href} href={l.href} onClick={() => setOpen(false)} style={{ textDecoration: 'none', color: active ? 'var(--terra, #C75D39)' : 'var(--ink, #211C12)', fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: 21, letterSpacing: '-0.02em', padding: '14px 0', borderBottom: '1px solid var(--line, rgba(33,28,18,0.11))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Link key={l.href} href={l.href} onClick={() => setOpen(false)} style={{ textDecoration: 'none', color: active ? 'var(--terra, #C75D39)' : 'var(--ink, #211C12)', fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: 21, letterSpacing: '-0.02em', padding: '14px 0', borderBottom: '1px solid var(--line, rgba(33,28,18,0.11))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 {active && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--terra, #C75D39)', display: 'inline-block', flexShrink: 0 }} />}
                 {l.label}
               </span>
               <span style={{ color: 'var(--terra, #C75D39)', fontSize: 16 }}>→</span>
-            </a>
+            </Link>
           );
         })}
 
         <div style={{ marginTop: 'auto', paddingTop: 28, display: 'flex', flexDirection: 'column', gap: 10 }}>
           {loggedIn ? (
             <>
-              <a href="/profile" onClick={() => setOpen(false)} style={{ textDecoration: 'none', textAlign: 'center', color: 'var(--dim, #6F6857)', fontSize: 15, fontWeight: 600, padding: 13, borderRadius: 999, border: '1px solid var(--border, rgba(33,28,18,0.16))' }}>{session?.user?.name ?? 'Profile'}</a>
-              <a href="/dashboard" onClick={() => setOpen(false)} style={{ textDecoration: 'none', textAlign: 'center', color: 'var(--paper, #F6EFE1)', background: 'var(--ink, #211C12)', fontSize: 15, fontWeight: 600, padding: 14, borderRadius: 999 }}>Dashboard →</a>
+              <Link href="/profile" onClick={() => setOpen(false)} style={{ textDecoration: 'none', textAlign: 'center', color: 'var(--dim, #6F6857)', fontSize: 15, fontWeight: 600, padding: 13, borderRadius: 999, border: '1px solid var(--border, rgba(33,28,18,0.16))' }}>{session?.user?.name ?? 'Profile'}</Link>
+              <Link href="/dashboard" onClick={() => setOpen(false)} style={{ textDecoration: 'none', textAlign: 'center', color: 'var(--paper, #F6EFE1)', background: 'var(--ink, #211C12)', fontSize: 15, fontWeight: 600, padding: 14, borderRadius: 999 }}>Dashboard →</Link>
             </>
           ) : (
             <>
-              <a href="/auth/login" onClick={() => setOpen(false)} style={{ textDecoration: 'none', textAlign: 'center', color: 'var(--dim, #6F6857)', fontSize: 15, fontWeight: 600, padding: 13, borderRadius: 999, border: '1px solid var(--border, rgba(33,28,18,0.16))' }}>Sign in</a>
-              <a href="/auth/signup" onClick={() => setOpen(false)} style={{ textDecoration: 'none', textAlign: 'center', color: 'var(--paper, #F6EFE1)', background: 'var(--ink, #211C12)', fontSize: 15, fontWeight: 600, padding: 14, borderRadius: 999 }}>Start free →</a>
+              <Link href="/auth/login" onClick={() => setOpen(false)} style={{ textDecoration: 'none', textAlign: 'center', color: 'var(--dim, #6F6857)', fontSize: 15, fontWeight: 600, padding: 13, borderRadius: 999, border: '1px solid var(--border, rgba(33,28,18,0.16))' }}>Sign in</Link>
+              <Link href="/auth/signup" onClick={() => setOpen(false)} style={{ textDecoration: 'none', textAlign: 'center', color: 'var(--paper, #F6EFE1)', background: 'var(--ink, #211C12)', fontSize: 15, fontWeight: 600, padding: 14, borderRadius: 999 }}>Start free →</Link>
             </>
           )}
         </div>
@@ -170,7 +171,7 @@ export default function SharedNav({ dark, setDark }: Props) {
         .snav-overlay.open { opacity: 1; pointer-events: auto; }
         .snav-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(300px,85vw); z-index: 210; background: var(--bg, #F6EFE1); border-left: 1px solid var(--line, rgba(33,28,18,0.11)); padding: 24px 22px 32px; display: flex; flex-direction: column; transform: translateX(100%); visibility: hidden; transition: transform .4s cubic-bezier(.3,.7,.2,1), visibility 0s linear .4s; overflow-y: auto; }
         .snav-drawer.open { transform: translateX(0); visibility: visible; transition: transform .4s cubic-bezier(.3,.7,.2,1), visibility 0s linear 0s; }
-        @media (max-width: 740px) { .snav-links { display: none; } .snav-toggle { display: none; } .snav-cta { display: none; } .snav-burger { display: flex; } }
+        @media (max-width: 740px) { .snav-links { display: none !important; } .snav-toggle { display: none !important; } .snav-cta { display: none !important; } .snav-burger { display: flex !important; } }
       `}</style>
     </>
   );

@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import { useTheme } from '../hooks/useTheme';
 import './gallery.css';
 import SharedNav from '../components/SharedNav';
@@ -351,14 +352,14 @@ export default function GalleryPage() {
           <div aria-hidden="true" style={{ position:'absolute', bottom:'-34%', left:'50%', transform:'translateX(-50%)', width:'60vw', height:'60vw', maxWidth:'620px', maxHeight:'620px', borderRadius:'50%', background:'radial-gradient(circle, var(--sig), transparent 60%)', opacity:.12, filter:'blur(60px)', pointerEvents:'none' }} />
           <div style={{ position:'relative', maxWidth:'900px', margin:'0 auto' }}>
             <h2 style={{ fontFamily:"'General Sans'", fontWeight:600, fontSize:'clamp(30px, 4.6vw, 60px)', lineHeight:1.06, letterSpacing:'-0.03em', margin:'0 0 32px', textWrap:'balance' } as React.CSSProperties}>Your brand could <span style={{ fontFamily:"'Instrument Serif', serif", fontStyle:'italic', fontWeight:400, color:'var(--terra)' }}>live here too.</span></h2>
-            <a href="/auth/signup" data-magnetic style={{ position:'relative', textDecoration:'none', display:'inline-flex', alignItems:'center', gap:'14px', padding:'14px 14px 14px 28px', borderRadius:'999px', background:'var(--sig)', color:'var(--onSig)', fontFamily:"'General Sans'", fontWeight:600, fontSize:'18px' }}>
+            <Link href="/auth/signup" data-magnetic style={{ position:'relative', textDecoration:'none', display:'inline-flex', alignItems:'center', gap:'14px', padding:'14px 14px 14px 28px', borderRadius:'999px', background:'var(--sig)', color:'var(--onSig)', fontFamily:"'General Sans'", fontWeight:600, fontSize:'18px' }}>
               <span data-mag-inner style={{ display:'inline-flex', alignItems:'center', gap:'14px' }}>
                 Build your brand
                 <span style={{ width:'42px', height:'42px', borderRadius:'50%', background:'var(--onSig)', color:'var(--sig)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
                   <svg data-arrowicon width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ transition:'transform .35s cubic-bezier(.2,.7,.2,1)' }}><path d="M7 17 17 7M9 7h8v8"/></svg>
                 </span>
               </span>
-            </a>
+            </Link>
           </div>
         </section>
 
