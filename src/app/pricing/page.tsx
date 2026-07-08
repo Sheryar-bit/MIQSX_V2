@@ -1,65 +1,11 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { useTheme } from '../hooks/useTheme';
 import SharedNav from '../components/SharedNav';
 import MarketingFooter from '../components/MarketingFooter';
+import { PLANS } from './plans';
 import './pricing.css';
-
-const PLANS = [
-  {
-    name: 'Free',
-    price: { monthly: 0, yearly: 0 },
-    blurb: 'For solo founders exploring their brand DNA.',
-    cta: 'Get started free',
-    href: '/auth/signup',
-    highlight: false,
-    features: [
-      '1 Brand DNA',
-      '30 generated assets / month',
-      'Brand Guardian scoring',
-      'Name generator',
-      'Basic moodboard',
-      'Community support',
-    ],
-  },
-  {
-    name: 'Pro',
-    price: { monthly: 29, yearly: 19 },
-    blurb: 'For freelancers and growing brands.',
-    cta: 'Start Pro free',
-    href: '/auth/signup?plan=pro',
-    highlight: true,
-    badge: 'Most popular',
-    features: [
-      '5 Brand DNAs',
-      'Unlimited asset generation',
-      'Trilingual copy (EN · UR · Roman)',
-      'Logo composer + export',
-      'Cultural Check + Stress Test',
-      'Focus group simulation',
-      'Up to 3 seats',
-      'Priority support',
-    ],
-  },
-  {
-    name: 'Agency',
-    price: { monthly: 79, yearly: 55 },
-    blurb: 'For studios managing multiple clients.',
-    cta: 'Start Agency free',
-    href: '/auth/signup?plan=agency',
-    highlight: false,
-    features: [
-      'Unlimited Brand DNAs',
-      'Unlimited asset generation',
-      'All Pro features',
-      'Client review links',
-      'Audit log + activity feed',
-      'Unlimited seats',
-      'WhatsApp approval workflow',
-      'Dedicated support',
-    ],
-  },
-];
 
 const CHECK = (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -72,7 +18,7 @@ export default function PricingPage() {
   const [yearly, setYearly] = useState(false);
 
   return (
-    <div style={{ minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--ink)', transition: 'background .4s, color .4s' }}>
       <SharedNav dark={dark} setDark={setDark} />
 
       <main className="pr-main">
@@ -123,9 +69,9 @@ export default function PricingPage() {
                 <div className="pr-billed">Billed ${(plan.price.yearly * 12).toLocaleString()} / year</div>
               )}
               <p className="pr-blurb">{plan.blurb}</p>
-              <a href={plan.href} className={`pr-cta${plan.highlight ? ' pr-cta--featured' : ''}`}>
+              <Link href={plan.href} className={`pr-cta${plan.highlight ? ' pr-cta--featured' : ''}`}>
                 {plan.cta}
-              </a>
+              </Link>
               <ul className="pr-features">
                 {plan.features.map(f => (
                   <li key={f} className="pr-feature">

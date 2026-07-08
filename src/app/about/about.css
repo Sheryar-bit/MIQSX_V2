@@ -81,7 +81,7 @@ body { margin: 0; background: #F4EEE2; font-family: 'General Sans', system-ui, s
 
 /* ---- Margin annotation ---- */
 .ab-margin {
-  position: absolute; right: calc(100% + 30px); width: 150px;
+  position: absolute; right: calc(100% + 120px); width: 150px;
   text-align: right; font-family: 'Newsreader', serif; font-style: italic;
   font-size: 14px; line-height: 1.4; color: var(--muted);
 }
@@ -98,7 +98,7 @@ body { margin: 0; background: #F4EEE2; font-family: 'General Sans', system-ui, s
 }
 
 /* ---- Responsive ---- */
-@media (max-width: 1080px) { .ab-margin { display: none !important; } }
+@media (max-width: 1300px) { .ab-margin { display: none !important; } }
 @media (max-width: 760px) {
   .ab-nav-links { display: none !important; }
   .ab-spine { display: none !important; }

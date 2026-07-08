@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useTheme } from '../hooks/useTheme';
 import './about.css';
 import SharedNav from '../components/SharedNav';
@@ -171,15 +172,14 @@ export default function AboutPage() {
         <section style={{ position: 'relative', zIndex: 10, padding: 'clamp(20px,4vh,50px) clamp(20px,5vw,60px) clamp(50px,9vh,100px)', borderTop: '1px solid var(--line)' }}>
           <div className="ab-col">
             <div data-reveal style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--terra)', marginBottom: 10 }}>The people behind it</div>
-            <p data-reveal style={{ fontFamily: "'Newsreader', serif", fontSize: 'clamp(17px,1.5vw,19px)', lineHeight: 1.6, color: 'var(--muted)', margin: '0 0 36px', maxWidth: '52ch' }}>Four final-year students who got tired of watching good small brands look accidental. We&apos;re building MIQSX as our degree project — and, quietly, as something bigger.</p>
+            <p data-reveal style={{ fontFamily: "'Newsreader', serif", fontSize: 'clamp(17px,1.5vw,19px)', lineHeight: 1.6, color: 'var(--muted)', margin: '0 0 36px', maxWidth: '52ch' }}>Three final-year students who got tired of watching good small brands look accidental. We&apos;re building MIQSX as our degree project — and, quietly, as something bigger.</p>
 
             <div data-reveal style={{ borderTop: '1px solid var(--line)' }}>
-              {[
-                { initials: 'AK', bg: 'var(--terra)', color: '#fff', name: '[ Name One ]', role: 'Product & Brand DNA', obsession: 'getting the Guardian score to feel fair.' },
-                { initials: 'SR', bg: 'var(--sig)', color: 'var(--onSig)', name: '[ Name Two ]', role: 'AI & Learning Loop', obsession: 'teaching it good Roman Urdu.' },
-                { initials: 'MT', bg: 'var(--olive)', color: '#fff', name: '[ Name Three ]', role: 'Design & Frontend', obsession: 'the exact warmth of our cream.' },
-                { initials: 'HF', bg: 'var(--leaf)', color: '#fff', name: '[ Name Four ]', role: 'Research & Go-to-market', obsession: 'talking to every freelancer in Lahore.' },
-              ].map((m, i) => (
+       {[
+         { initials: 'QA', bg: 'var(--leaf)', color: '#fff', name: 'Qirrat Azam', role: 'Research & Go-to-market', obsession: 'talking to every freelancer in Karachi.' },
+  { initials: 'MF', bg: 'var(--terra)', color: '#fff', name: 'Mahnoor Fatima', role: 'Product & Brand DNA / Design & Frontend', obsession: 'getting the Guardian score to feel fair, and the exact warmth of our cream.' },
+  { initials: 'MS', bg: 'var(--sig)', color: 'var(--onSig)', name: 'Muhammad Shahyar', role: 'AI & Learning Loop', obsession: 'teaching it good Roman Urdu.' },
+].map((m, i) => (
                 <div key={i} className="ab-team-row" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 18, alignItems: 'center', padding: '20px 14px', borderBottom: '1px solid var(--line)', borderRadius: 10, transition: 'background .3s ease', margin: '0 -14px' }}>
                   <span style={{ width: 52, height: 52, borderRadius: '50%', background: m.bg, color: m.color, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'General Sans', sans-serif", fontWeight: 600, fontSize: 18 }}>{m.initials}</span>
                   <div className="ab-team-meta">
@@ -212,7 +212,7 @@ export default function AboutPage() {
               We&apos;re not making logos.{' '}
               <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: 'italic', fontWeight: 400, color: 'var(--sig)' }}>We&apos;re giving brands a brain.</span>
             </h2>
-            <a href="/auth/signup" data-magnetic style={{ position: 'relative', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 14, padding: '14px 14px 14px 28px', borderRadius: 999, background: 'var(--sig)', color: 'var(--onSig)', fontFamily: "'General Sans', sans-serif", fontWeight: 600, fontSize: 18 }}>
+            <Link href="/auth/signup" data-magnetic style={{ position: 'relative', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 14, padding: '14px 14px 14px 28px', borderRadius: 999, background: 'var(--sig)', color: 'var(--onSig)', fontFamily: "'General Sans', sans-serif", fontWeight: 600, fontSize: 18 }}>
               <span data-mag-inner style={{ display: 'inline-flex', alignItems: 'center', gap: 14 }}>
                 Build your brand
                 <span style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--onSig)', color: 'var(--sig)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -221,7 +221,7 @@ export default function AboutPage() {
                   </svg>
                 </span>
               </span>
-            </a>
+            </Link>
           </div>
         </section>
 
