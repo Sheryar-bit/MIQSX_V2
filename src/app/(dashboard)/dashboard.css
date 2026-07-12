@@ -348,6 +348,26 @@
 @media (max-width: 860px) { .an-kpis { grid-template-columns: 1fr 1fr !important; } .an-low { grid-template-columns: 1fr !important; } }
 @media (max-width: 460px) { .an-kpis { grid-template-columns: 1fr !important; } }
 
+/* ---- Brand detail page ---- */
+.brand-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 820px) { .brand-2col { grid-template-columns: 1fr !important; } }
+
+/* ---- Account: Team ---- */
+@keyframes tm-rise { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: none; } }
+@keyframes tm-pop { from { opacity:0; transform: scale(.92) translateY(6px); } to { opacity:1; transform: none; } }
+.tm-row { animation: tm-rise .45s cubic-bezier(.2,.7,.2,1) both; }
+.tm-card { animation: tm-pop .5s cubic-bezier(.2,.7,.2,1) both; }
+.tm-role-btn { cursor: pointer; font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--surf2); color: var(--muted); transition: all .18s; }
+.tm-role-btn:hover:not(:disabled) { color: var(--ink); border-color: var(--ink); }
+.tm-role-btn:disabled { opacity: .5; cursor: default; }
+.tm-danger-btn { cursor: pointer; }
+
+/* ---- Responsive (team) ---- */
+@media (max-width: 720px) {
+  .tm-invite-row { grid-template-columns: 1fr !important; }
+  .tm-danger { flex-direction: column; align-items: flex-start !important; gap: 14px !important; }
+}
+
 /* ---- Account: Public Profile ---- */
 @keyframes pp-rise { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: none; } }
 @keyframes pp-toast { 0% { opacity:0; transform: translate(-50%, 14px); } 12%,88% { opacity:1; transform: translate(-50%, 0); } 100% { opacity:0; transform: translate(-50%, 14px); } }

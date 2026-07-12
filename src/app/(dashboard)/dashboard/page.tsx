@@ -142,7 +142,7 @@ export default async function DashboardPage() {
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
             {brands.map((brand) => (
-              <Link key={brand._id} href={`/dashboard/brand/${brand._id}`} className="ds-brand-card">
+              <Link key={brand._id} href={`/brand/${brand._id}`} className="ds-brand-card">
                 {brand.dna?.colors && (
                   <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
                     {[brand.dna.colors.primary, brand.dna.colors.secondary, brand.dna.colors.accent]
