@@ -193,7 +193,7 @@ body { margin: 0; }
   .mqsx-faq { grid-template-columns: 1fr; }
   .mqsx-hero2 { grid-template-columns: 1fr; }
   .mqsx-loop { flex-direction: column; gap: 12px; }
-  .mqsx-loop .step { transform: none !important; min-height: auto !important; }
+  .mqsx-loop .step { flex: none !important; transform: none !important; min-height: auto !important; }
   .step-card { min-height: auto !important; }
   .mqsx-arrowh { display: none; }
   .mqsx-show, .mqsx-show.rev { grid-template-columns: 1fr !important; }

@@ -172,13 +172,15 @@ export default function AboutPage() {
         <section style={{ position: 'relative', zIndex: 10, padding: 'clamp(20px,4vh,50px) clamp(20px,5vw,60px) clamp(50px,9vh,100px)', borderTop: '1px solid var(--line)' }}>
           <div className="ab-col">
             <div data-reveal style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--terra)', marginBottom: 10 }}>The people behind it</div>
-            <p data-reveal style={{ fontFamily: "'Newsreader', serif", fontSize: 'clamp(17px,1.5vw,19px)', lineHeight: 1.6, color: 'var(--muted)', margin: '0 0 36px', maxWidth: '52ch' }}>Three final-year students who got tired of watching good small brands look accidental. We&apos;re building MIQSX as our degree project — and, quietly, as something bigger.</p>
+            <p data-reveal style={{ fontFamily: "'Newsreader', serif", fontSize: 'clamp(17px,1.5vw,19px)', lineHeight: 1.6, color: 'var(--muted)', margin: '0 0 36px', maxWidth: '52ch' }}>Four final year students who got tired of watching good small brands look accidental. We&apos;re building MIQSX as our degree project — and, quietly, as something bigger.</p>
 
             <div data-reveal style={{ borderTop: '1px solid var(--line)' }}>
        {[
          { initials: 'QA', bg: 'var(--leaf)', color: '#fff', name: 'Qirrat Azam', role: 'Research & Go-to-market', obsession: 'talking to every freelancer in Karachi.' },
   { initials: 'MF', bg: 'var(--terra)', color: '#fff', name: 'Mahnoor Fatima', role: 'Product & Brand DNA / Design & Frontend', obsession: 'getting the Guardian score to feel fair, and the exact warmth of our cream.' },
+  { initials: 'IM', bg: 'var(--sig)', color: 'var(--onSig)', name: 'Iraj Mahmood', role: 'AI & Architecture', obsession: 'Making ai feel smooth.' },
   { initials: 'MS', bg: 'var(--sig)', color: 'var(--onSig)', name: 'Muhammad Shahyar', role: 'AI & Learning Loop', obsession: 'teaching it good Roman Urdu.' },
+
 ].map((m, i) => (
                 <div key={i} className="ab-team-row" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 18, alignItems: 'center', padding: '20px 14px', borderBottom: '1px solid var(--line)', borderRadius: 10, transition: 'background .3s ease', margin: '0 -14px' }}>
                   <span style={{ width: 52, height: 52, borderRadius: '50%', background: m.bg, color: m.color, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'General Sans', sans-serif", fontWeight: 600, fontSize: 18 }}>{m.initials}</span>

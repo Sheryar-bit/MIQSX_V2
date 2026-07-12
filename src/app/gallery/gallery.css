@@ -55,13 +55,46 @@ body { margin: 0; background: #F4EEE2; font-family: 'General Sans', system-ui, s
 [data-vp] { cursor: grab; touch-action: none; }
 [data-vp].grabbing { cursor: grabbing; }
 
+/* ---- Brand World: warm grain over the canvas background ---- */
+.gl-canvas-grain {
+  position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  opacity: .025; mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+[data-theme="dark"] .gl-canvas-grain { opacity: .05; mix-blend-mode: overlay; }
+
+/* ---- Brand World: DNA node entrance ---- */
+.gl-dna-node { animation: gl-dna-in .55s cubic-bezier(.2,.7,.2,1) both; }
+
+/* ---- Brand World: asset nodes — entrance travels in from the DNA node,
+   hover lifts with a soft shadow, click opens the detail preview ---- */
+.gl-assetnode { cursor: pointer; animation: gl-asset-in .6s cubic-bezier(.2,.7,.2,1) both; animation-delay: var(--d, 0ms); }
+.gl-assetnode-inner { transition: transform .3s cubic-bezier(.2,.7,.2,1), box-shadow .3s ease; }
+.gl-assetnode:hover .gl-assetnode-inner, .gl-assetnode:focus-visible .gl-assetnode-inner { transform: translateY(-6px); box-shadow: 0 26px 54px -22px rgba(0,0,0,.5); }
+.gl-assetnode:focus-visible { outline: 2px solid var(--terra); outline-offset: 4px; border-radius: 14px; }
+
+/* ---- Brand World: connector lines fade in with the asset they lead to ---- */
+.gl-connector { opacity: 0; }
+
 /* ---- Keyframes ---- */
 @keyframes gl-twinkle { 0%,100% { opacity:.4; transform: scale(.8); } 50% { opacity:1; transform: scale(1.12); } }
 @keyframes gl-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); } }
 @keyframes gl-dash { to { stroke-dashoffset: -16; } }
+@keyframes gl-dna-in { 0% { opacity: 0; transform: scale(.8); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes gl-asset-in {
+  0% { opacity: 0; transform: translate(var(--fx, 0px), var(--fy, 0px)) scale(.55); }
+  100% { opacity: 1; transform: translate(0, 0) scale(1); }
+}
+@keyframes gl-connector-in { 0% { opacity: 0; } 100% { opacity: .55; } }
 
 /* ---- Responsive ---- */
-@media (prefers-reduced-motion: reduce) { * { animation:none !important; } [data-reveal] { opacity:1 !important; transform:none !important; filter:none !important; } }
+@media (prefers-reduced-motion: reduce) {
+  * { animation:none !important; }
+  [data-reveal] { opacity:1 !important; transform:none !important; filter:none !important; }
+  .gl-connector { opacity: .55 !important; }
+  .gl-assetnode, .gl-dna-node { opacity: 1 !important; transform: none !important; }
+}
 @media (max-width: 1100px) { .gl-masonry { column-count: 3; } }
 @media (max-width: 820px) { .gl-masonry { column-count: 2; } .gl-nav-links { display: none !important; } .gl-head { font-size: clamp(38px, 11vw, 60px) !important; } }
 @media (max-width: 460px) { .gl-masonry { column-count: 1; } }

@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Zap, Lock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import "../auth.css";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -45,58 +43,66 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <div className="flex justify-center mb-8">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="h-10 w-10 rounded-xl bg-gradient-brand flex items-center justify-center">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-2xl font-bold">MIQSX</span>
-          </Link>
-        </div>
+    <div data-theme="light" style={{ minHeight: "100vh" }}>
+      <div style={{ position: "relative", background: "var(--bg)", color: "var(--ink)", fontFamily: "'General Sans', system-ui, sans-serif", minHeight: "100vh", WebkitFontSmoothing: "antialiased", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+        <div className="au-grain" aria-hidden="true" />
 
-        <div className="rounded-2xl border border-border bg-surface p-8">
-          {done ? (
-            <div className="text-center space-y-3">
-              <h1 className="text-2xl font-bold text-text">Password updated</h1>
-              <p className="text-text-muted text-sm">Redirecting you to sign in…</p>
-            </div>
-          ) : token === null ? (
-            <div className="text-center space-y-3">
-              <h1 className="text-xl font-bold text-text">Invalid link</h1>
-              <p className="text-text-muted text-sm">This reset link is missing its token.</p>
-              <Link href="/auth/forgot-password" className="text-primary-light hover:underline text-sm">
-                Request a new one
-              </Link>
-            </div>
-          ) : (
-            <>
-              <h1 className="text-2xl font-bold text-text mb-1">Set a new password</h1>
-              <p className="text-text-muted text-sm mb-8">Choose a strong password (min. 8 characters).</p>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <Input
-                  id="password"
-                  type="password"
-                  label="New password"
-                  placeholder="••••••••"
-                  icon={<Lock className="h-4 w-4" />}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  minLength={8}
-                  required
-                />
-                {error && (
-                  <p className="text-sm text-error bg-error/10 border border-error/20 rounded-xl px-4 py-3">
-                    {error}
-                  </p>
-                )}
-                <Button type="submit" className="w-full" loading={loading}>
-                  Update password
-                </Button>
-              </form>
-            </>
-          )}
+        <div style={{ position: "relative", width: "100%", maxWidth: 408 }}>
+          <Link href="/" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, textDecoration: "none", color: "var(--ink)", fontFamily: "'General Sans'", fontWeight: 700, fontSize: 21, letterSpacing: "-0.02em", marginBottom: 32 }}>
+            <span style={{ width: 22, height: 22, background: "var(--sig)", display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 5 }}>
+              <svg width="12" height="12" viewBox="0 0 40 40" fill="var(--onSig)"><path d="M20 0c3 13 7 17 20 20-13 3-17 7-20 20-3-13-7-17-20-20C13 17 17 13 20 0Z" /></svg>
+            </span>
+            MIQSX
+          </Link>
+
+          <div style={{ borderRadius: 20, border: "1px solid var(--line)", background: "var(--surface)", padding: "clamp(28px, 4vw, 36px)" }}>
+            {done ? (
+              <div style={{ textAlign: "center" }}>
+                <h1 style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: 24, letterSpacing: "-0.02em", margin: "0 0 10px" }}>Password updated</h1>
+                <p style={{ fontFamily: "'Newsreader', serif", fontSize: 15, color: "var(--muted)", margin: 0 }}>Redirecting you to sign in…</p>
+              </div>
+            ) : token === null ? (
+              <div style={{ textAlign: "center" }}>
+                <h1 style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: 22, letterSpacing: "-0.02em", margin: "0 0 10px" }}>Invalid link</h1>
+                <p style={{ fontFamily: "'Newsreader', serif", fontSize: 15, color: "var(--muted)", margin: "0 0 12px" }}>This reset link is missing its token.</p>
+                <Link href="/auth/forgot-password" style={{ color: "var(--sig)", fontSize: 14, fontWeight: 600, textDecoration: "none" }}>
+                  Request a new one
+                </Link>
+              </div>
+            ) : (
+              <>
+                <h1 style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: 26, letterSpacing: "-0.02em", margin: "0 0 8px" }}>Set a new password</h1>
+                <p style={{ fontFamily: "'Newsreader', serif", fontSize: 15, color: "var(--muted)", margin: "0 0 26px" }}>Choose a strong password (min. 8 characters).</p>
+                <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <label style={{ display: "block" }}>
+                    <span style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 6 }}>New password</span>
+                    <input
+                      className="au-input"
+                      type="password"
+                      placeholder="Min. 8 characters"
+                      autoComplete="new-password"
+                      required
+                      minLength={8}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </label>
+                  {error && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 9, fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "var(--terra)", background: "color-mix(in oklab, var(--terra) 12%, transparent)", border: "1px solid color-mix(in oklab, var(--terra) 32%, transparent)", borderRadius: 10, padding: "11px 13px" }}>
+                      <span>✕</span> {error}
+                    </div>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    style={{ marginTop: 4, width: "100%", padding: "14px", borderRadius: 12, border: "none", background: "var(--sig)", color: "var(--onSig)", fontFamily: "'General Sans'", fontWeight: 600, fontSize: 15, cursor: loading ? "default" : "pointer", opacity: loading ? 0.7 : 1 }}
+                  >
+                    {loading ? "Updating…" : "Update password"}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useTheme } from '../hooks/useTheme';
 import './gallery.css';
@@ -37,32 +37,56 @@ const ALL_CARDS: Card[] = [
   { brand:'Nuxe Tech',    type:'Captions',      style:'Neon',       kind:'caption', en:'Built for scale ⚡',           ur:'بڑے پیمانے کے لیے',       roman:'Baray paimanay ke liye', h:150, ...score(54) },
 ].map((c, i) => ({ ...c, id: i }));
 
+type AssetNode = {
+  left: number; top: number; w: number; h: number;
+  bg: string; label: string; font: string; fstyle: string; fsize: number; fc: string;
+  kind: string; score: string; scoreBg: string; srcCard: Card;
+  fx: number; fy: number; delay: number;
+};
+
 function buildCanvas(brand: string) {
   const info = BRANDS[brand];
   const assets = ALL_CARDS.filter(c => c.brand === brand);
-  const bw = 1700, bh = 1150, cx = bw / 2, cy = bh / 2;
-  const dnaW = 250, aw = 168;
-  const links: { x1:number; y1:number; x2:number; y2:number }[] = [];
+  const dnaW = 240, aw = 172, cardH = 118;
+  const rx = 300, ry = 210; // tight orbit so the cluster reads as one compact world
+  const halfW = rx + aw / 2 + 30;
+  const halfH = ry + (cardH + 34) / 2 + 30;
+  const bw = Math.max(dnaW + 60, halfW * 2);
+  const bh = Math.max(dnaW + 60, halfH * 2);
+  const cx = bw / 2, cy = bh / 2;
   const n = assets.length;
-  const nodes = assets.map((c, i) => {
+  const links: { d: string; delay: number }[] = [];
+  const nodes: AssetNode[] = assets.map((c, i) => {
     const ang = (-90 + i * (360 / n)) * Math.PI / 180;
-    const ax = cx + Math.cos(ang) * 540;
-    const ay = cy + Math.sin(ang) * 380;
-    const ah = 116;
-    links.push({ x1: cx, y1: cy, x2: ax, y2: ay });
+    const ax = cx + Math.cos(ang) * rx;
+    const ay = cy + Math.sin(ang) * ry;
+    const left = ax - aw / 2, top = ay - (cardH + 34) / 2;
+    const mx = (cx + ax) / 2, my = (cy + ay) / 2;
+    const dx = ax - cx, dy = ay - cy;
+    const len = Math.hypot(dx, dy) || 1;
+    const bow = (i % 2 === 0 ? 1 : -1) * 24;
+    const ctrlx = mx + (-dy / len) * bow, ctrly = my + (dx / len) * bow;
+    const delay = 140 + i * 70;
+    links.push({ d: `M ${cx} ${cy} Q ${ctrlx} ${ctrly} ${ax} ${ay}`, delay });
     const isCap = c.kind === 'caption';
+    const centerX = left + aw / 2, centerY = top + (cardH + 34) / 2;
     return {
-      left: Math.round(ax - aw / 2), top: Math.round(ay - (ah + 34) / 2), w: aw, h: ah,
+      left: Math.round(left), top: Math.round(top), w: aw, h: cardH,
       bg: c.kind === 'palette' ? `linear-gradient(135deg, ${(c.swatches||[]).map(s => s[0]).join(',')})` : (c.bg || 'var(--surf2)'),
       label: isCap ? (c.en || '') : (c.word || c.type),
       font: c.kind === 'logo' ? "'Instrument Serif', serif" : "'General Sans', sans-serif",
       fstyle: c.kind === 'logo' ? 'italic' : 'normal',
       fsize: c.kind === 'logo' ? 30 : 15,
       fc: c.logoColor || '#fff',
-      kind: c.type, score: c.score, scoreBg: c.scoreBg,
+      kind: c.type, score: c.score, scoreBg: c.scoreBg, srcCard: c,
+      fx: cx - centerX, fy: cy - centerY, delay,
     };
   });
-  return { bw, bh, links, assets: nodes, dna: { swatches: info.swatches, font: info.font, tone: info.tone }, brand, dnaLeft: cx - dnaW / 2, dnaTop: cy - dnaW / 2, dnaW };
+  return {
+    bw, bh, cx, cy, links, assets: nodes,
+    dna: { swatches: info.swatches, font: info.font, tone: info.tone },
+    brand, dnaLeft: cx - dnaW / 2, dnaTop: cy - dnaW / 2, dnaW,
+  };
 }
 
 type Chip = { label: string; active: boolean };
@@ -76,6 +100,7 @@ export default function GalleryPage() {
   const [fStyle, setFStyle] = useState('All');
   const [fBrand, setFBrand] = useState('All');
   const [openBrand, setOpenBrand] = useState<string | null>(null);
+  const [previewCard, setPreviewCard] = useState<Card | null>(null);
 
   const vpRef = useRef<HTMLDivElement>(null);
   const boardRef = useRef<HTMLDivElement>(null);
@@ -88,6 +113,8 @@ export default function GalleryPage() {
     (fBrand === 'All' || c.brand === fBrand)
   );
 
+  const canvas = useMemo(() => (openBrand ? buildCanvas(openBrand) : null), [openBrand]);
+
   const applyBoard = useCallback(() => {
     const board = boardRef.current;
     if (board && viewRef.current) {
@@ -96,22 +123,35 @@ export default function GalleryPage() {
     }
   }, []);
 
-  const centerBoard = useCallback(() => {
+  // Fits the brand-world cluster to ~78% of the viewport so it opens filled-in, not
+  // adrift in empty space. `animate` is only used for the explicit "reset view" click —
+  // the initial open should snap instantly so the per-card entrance animation reads clean.
+  const centerBoard = useCallback((animate = false) => {
     const vp = vpRef.current;
-    if (!vp) return;
+    const board = boardRef.current;
+    if (!vp || !canvas) return;
     const r = vp.getBoundingClientRect();
     const small = r.width < 740;
-    const s = small ? 0.42 : 0.66;
-    viewRef.current = { x: r.width / 2 - 850 * s, y: r.height / 2 - 575 * s, s };
+    const availW = r.width * (small ? 0.88 : 0.78);
+    const availH = r.height * (small ? 0.8 : 0.76);
+    const s = Math.max(0.4, Math.min(1.3, Math.min(availW / canvas.bw, availH / canvas.bh)));
+    if (animate && board) {
+      board.style.transition = 'transform .6s cubic-bezier(.2,.7,.2,1)';
+      window.setTimeout(() => { if (board) board.style.transition = ''; }, 620);
+    }
+    viewRef.current = { x: r.width / 2 - canvas.cx * s, y: r.height / 2 - canvas.cy * s, s };
     applyBoard();
-  }, [applyBoard]);
+  }, [applyBoard, canvas]);
 
   const initBoard = useCallback(() => {
     const vp = vpRef.current;
     if (!vp) return;
-    centerBoard();
+    centerBoard(false);
     let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
     const down = (e: PointerEvent) => {
+      // Let clicks on asset cards through untouched — capturing the pointer here
+      // hijacks the click target to `vp`, so the card's own onClick never fires.
+      if ((e.target as HTMLElement).closest('.gl-assetnode')) return;
       dragging = true; vp.classList.add('grabbing');
       sx = e.clientX; sy = e.clientY; ox = viewRef.current.x; oy = viewRef.current.y;
       vp.setPointerCapture(e.pointerId);
@@ -148,6 +188,7 @@ export default function GalleryPage() {
   useEffect(() => {
     if (!openBrand) {
       if (teardownRef.current) { teardownRef.current(); teardownRef.current = null; }
+      setPreviewCard(null);
       return;
     }
     let tries = 0;
@@ -159,12 +200,16 @@ export default function GalleryPage() {
     return () => clearTimeout(t);
   }, [openBrand, initBoard]);
 
-  // ESC to close canvas
+  // ESC closes the asset preview first, then the canvas
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpenBrand(null); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (previewCard) { setPreviewCard(null); return; }
+      setOpenBrand(null);
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [previewCard]);
 
   // scroll reveal + tilt + magnetic CTA + data-draw
   useEffect(() => {
@@ -236,7 +281,6 @@ export default function GalleryPage() {
   }, [fType, fStyle, fBrand]);
 
   const logoStar = <svg viewBox="0 0 40 40" fill="var(--onSig)" width="12" height="12"><path d="M20 0c3 13 7 17 20 20-13 3-17 7-20 20-3-13-7-17-20-20C13 17 17 13 20 0Z"/></svg>;
-  const canvas = openBrand ? buildCanvas(openBrand) : null;
 
   function ChipRow({ label, chips, active, onSelect }: { label: string; chips: string[]; active: string; onSelect: (v: string) => void }) {
     return (
@@ -367,16 +411,17 @@ export default function GalleryPage() {
 
         {/* BRAND WORLD CANVAS OVERLAY */}
         {openBrand && canvas && (
-          <div data-overlay style={{ position:'fixed', inset:0, zIndex:200, background:'color-mix(in oklab, var(--bg) 60%, #000)', backdropFilter:'blur(3px)' }}>
-            <div ref={vpRef} data-vp style={{ position:'absolute', inset:0, overflow:'hidden' }}>
+          <div data-overlay style={{ position:'fixed', inset:0, zIndex:200, background:'color-mix(in oklab, var(--bg) 55%, #000)', backdropFilter:'blur(3px)' }}>
+            <div ref={vpRef} data-vp style={{ position:'absolute', inset:0, overflow:'hidden', background:'radial-gradient(ellipse at 50% 42%, color-mix(in oklab, var(--terra) 9%, var(--bg)) 0%, var(--bg) 66%)' }}>
+              <div className="gl-canvas-grain" aria-hidden="true" />
               <div ref={boardRef} data-board style={{ position:'absolute', top:0, left:0, width:`${canvas.bw}px`, height:`${canvas.bh}px`, transformOrigin:'0 0', backgroundImage:'radial-gradient(var(--line) 1px, transparent 1px)', backgroundSize:'40px 40px' }}>
                 <svg width={canvas.bw} height={canvas.bh} style={{ position:'absolute', top:0, left:0, pointerEvents:'none' }} aria-hidden="true">
                   {canvas.links.map((l, i) => (
-                    <line key={i} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="var(--terra)" strokeWidth="1.5" strokeDasharray="5 5" opacity="0.5" style={{ animation:'gl-dash 1s linear infinite' }} />
+                    <path key={i} className="gl-connector" d={l.d} fill="none" stroke="var(--terra)" strokeWidth="1.4" strokeDasharray="5 6" style={{ animation: `gl-dash 1.1s linear infinite, gl-connector-in .5s ease ${l.delay}ms both` }} />
                   ))}
                 </svg>
                 {/* DNA node */}
-                <div style={{ position:'absolute', left:`${canvas.dnaLeft}px`, top:`${canvas.dnaTop}px`, width:`${canvas.dnaW}px`, borderRadius:'20px', background:'var(--surface)', border:'2px solid var(--sig)', boxShadow:'0 26px 60px -28px rgba(0,0,0,.6)', padding:'20px', zIndex:5 }}>
+                <div className="gl-dna-node" style={{ position:'absolute', left:`${canvas.dnaLeft}px`, top:`${canvas.dnaTop}px`, width:`${canvas.dnaW}px`, borderRadius:'20px', background:'var(--surface)', border:'2px solid var(--sig)', boxShadow:'0 26px 60px -28px rgba(0,0,0,.6)', padding:'18px', zIndex:5 }}>
                   <svg aria-hidden="true" width="22" height="22" viewBox="0 0 40 40" fill="var(--terra)" style={{ position:'absolute', top:'-13px', left:'-13px', animation:'gl-twinkle 3s ease-in-out infinite' }}><path d="M20 0c3 13 7 17 20 20-13 3-17 7-20 20-3-13-7-17-20-20C13 17 17 13 20 0Z"/></svg>
                   <span style={{ position:'absolute', top:'-14px', right:'14px', fontFamily:"'Instrument Serif', serif", fontStyle:'italic', fontSize:'14px', color:'var(--terra)', background:'var(--bg)', padding:'0 7px' }}>the source</span>
                   <div style={{ display:'flex', alignItems:'center', gap:'9px', marginBottom:'14px' }}>
@@ -398,8 +443,17 @@ export default function GalleryPage() {
                 </div>
                 {/* Asset nodes */}
                 {canvas.assets.map((a, i) => (
-                  <div key={i} style={{ position:'absolute', left:`${a.left}px`, top:`${a.top}px`, width:`${a.w}px`, zIndex:6 }}>
-                    <div style={{ borderRadius:'14px', overflow:'hidden', border:'1px solid var(--line)', background:'var(--surface)', boxShadow:'0 18px 44px -26px rgba(0,0,0,.55)' }}>
+                  <div
+                    key={i}
+                    className="gl-assetnode"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${a.kind} — open preview`}
+                    onClick={() => setPreviewCard(a.srcCard)}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPreviewCard(a.srcCard); } }}
+                    style={{ position:'absolute', left:`${a.left}px`, top:`${a.top}px`, width:`${a.w}px`, zIndex:6, '--fx':`${a.fx}px`, '--fy':`${a.fy}px`, '--d':`${a.delay}ms` } as React.CSSProperties}
+                  >
+                    <div className="gl-assetnode-inner" style={{ borderRadius:'14px', overflow:'hidden', border:'1px solid var(--line)', background:'var(--surface)', boxShadow:'0 18px 44px -26px rgba(0,0,0,.55)' }}>
                       <div style={{ height:`${a.h}px`, background:a.bg, display:'flex', alignItems:'center', justifyContent:'center', padding:'10px' }}>
                         <span style={{ fontFamily:a.font, fontStyle:a.fstyle, fontSize:`${a.fsize}px`, color:a.fc, textAlign:'center', lineHeight:1.1 }}>{a.label}</span>
                       </div>
@@ -418,8 +472,31 @@ export default function GalleryPage() {
               <span style={{ fontFamily:"'JetBrains Mono', monospace", fontSize:'11px', color:'var(--muted)', background:'var(--surface)', border:'1px solid var(--line)', padding:'8px 13px', borderRadius:'999px' }}>drag to pan · scroll to zoom</span>
             </div>
             <div style={{ position:'absolute', top:'18px', right:'18px', zIndex:10, display:'flex', gap:'8px' }}>
-              <button onClick={centerBoard} aria-label="Reset view" style={{ width:'40px', height:'40px', borderRadius:'50%', border:'1px solid var(--line)', background:'var(--surface)', color:'var(--ink)', cursor:'pointer', fontSize:'15px' }}>⊙</button>
+              <button onClick={() => centerBoard(true)} aria-label="Reset view" style={{ width:'40px', height:'40px', borderRadius:'50%', border:'1px solid var(--line)', background:'var(--surface)', color:'var(--ink)', cursor:'pointer', fontSize:'15px' }}>⊙</button>
               <button onClick={() => setOpenBrand(null)} aria-label="Close" style={{ width:'40px', height:'40px', borderRadius:'50%', border:'1px solid var(--line)', background:'var(--ink)', color:'var(--bg)', cursor:'pointer', fontSize:'18px' }}>✕</button>
+            </div>
+          </div>
+        )}
+
+        {/* ASSET DETAIL PREVIEW */}
+        {previewCard && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${previewCard.brand} asset preview`}
+            style={{ position:'fixed', inset:0, zIndex:300, background:'color-mix(in oklab, var(--bg) 40%, #000)', backdropFilter:'blur(6px)', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }}
+            onClick={() => setPreviewCard(null)}
+          >
+            <div onClick={e => e.stopPropagation()} style={{ position:'relative', width:'min(440px,92vw)', borderRadius:'20px', overflow:'hidden', background:'var(--surface)', border:'1px solid var(--line)', boxShadow:'0 40px 90px -30px rgba(0,0,0,.6)' }}>
+              <CardVisual card={previewCard} />
+              <div style={{ padding:'16px 18px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <div>
+                  <div style={{ fontFamily:"'JetBrains Mono', monospace", fontSize:'11px', letterSpacing:'.08em', textTransform:'uppercase', color:'var(--muted)' }}>{previewCard.brand}</div>
+                  <div style={{ fontFamily:"'General Sans'", fontWeight:600, fontSize:'16px', marginTop:'2px' }}>{previewCard.type}</div>
+                </div>
+                <span style={{ fontFamily:"'JetBrains Mono', monospace", fontWeight:700, fontSize:'12px', padding:'6px 11px', borderRadius:'999px', background:previewCard.scoreBg, color:'#fff' }}>{previewCard.score}</span>
+              </div>
+              <button onClick={() => setPreviewCard(null)} aria-label="Close preview" style={{ position:'absolute', top:'10px', right:'10px', width:'32px', height:'32px', borderRadius:'50%', border:'none', background:'rgba(20,16,11,.55)', color:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(4px)' }}>✕</button>
             </div>
           </div>
         )}

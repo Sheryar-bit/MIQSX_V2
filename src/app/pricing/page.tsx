@@ -59,14 +59,14 @@ export default function PricingPage() {
                   <span className="pr-amount">Free</span>
                 ) : (
                   <>
-                    <span className="pr-currency">$</span>
-                    <span className="pr-amount">{yearly ? plan.price.yearly : plan.price.monthly}</span>
+                    <span className="pr-currency">PKR</span>
+                    <span className="pr-amount">{(yearly ? plan.price.yearly : plan.price.monthly).toLocaleString()}</span>
                     <span className="pr-period">/ mo</span>
                   </>
                 )}
               </div>
               {yearly && plan.price.monthly > 0 && (
-                <div className="pr-billed">Billed ${(plan.price.yearly * 12).toLocaleString()} / year</div>
+                <div className="pr-billed">Billed PKR {(plan.price.yearly * 12).toLocaleString()} / year</div>
               )}
               <p className="pr-blurb">{plan.blurb}</p>
               <Link href={plan.href} className={`pr-cta${plan.highlight ? ' pr-cta--featured' : ''}`}>
