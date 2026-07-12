@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { enforceOrgLimit } from "@/lib/org-context";
 import { trackEvent } from "@/lib/analytics";
-import { generateBrandImage, isCloudflareConfigured, FLUX_MODEL, type ImageSize } from "@/lib/imagegen";
+import { generateBrandImage, isCloudflareConfigured, NsfwPromptError, FLUX_MODEL, type ImageSize } from "@/lib/imagegen";
 
 const STYLE_PREFIXES: Record<string, string> = {
   realism: "professional photography, photorealistic, high detail, natural lighting, sharp focus,",
@@ -61,6 +61,9 @@ export async function POST(req: NextRequest) {
       model: FLUX_MODEL,
     });
   } catch (err) {
+    if (err instanceof NsfwPromptError) {
+      return NextResponse.json({ error: err.message }, { status: 400 });
+    }
     console.error("[IMAGERY]", err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Image generation failed" },

@@ -61,13 +61,19 @@ export async function POST(req: NextRequest) {
     { role: "user" as const, content: message },
   ];
 
-  const stream = await groq.chat.completions.create({
-    model: MODELS.text,
-    messages,
-    stream: true,
-    max_tokens: 400,
-    temperature: 0.8,
-  });
+  let stream;
+  try {
+    stream = await groq.chat.completions.create({
+      model: MODELS.text,
+      messages,
+      stream: true,
+      max_tokens: 400,
+      temperature: 0.8,
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "AI service error";
+    return NextResponse.json({ error: msg }, { status: 503 });
+  }
 
   const encoder = new TextEncoder();
   let fullResponse = "";

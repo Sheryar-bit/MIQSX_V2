@@ -43,15 +43,17 @@ export async function POST(req: NextRequest) {
       ? `The brand's known DNA: ${JSON.stringify((brand as { dna?: object }).dna, null, 2)}`
       : "No existing Brand DNA — analyze purely from the uploaded assets.";
 
-    const completion = await groq.chat.completions.create({
-      model: MODELS.vision,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `You are a brand consistency auditor. Analyze these ${files.length} brand asset image(s) and produce a brand audit report.
+    let completion;
+    try {
+      completion = await groq.chat.completions.create({
+        model: MODELS.vision,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `You are a brand consistency auditor. Analyze these ${files.length} brand asset image(s) and produce a brand audit report.
 
 ${brandDNAContext}
 
@@ -76,14 +78,18 @@ Return ONLY valid JSON in this exact format:
   "strengths": ["Strong consistent logo usage", "Good whitespace discipline"],
   "recommendations": ["Standardize to 2 fonts maximum", "Create a color palette guide"]
 }`,
-            },
-            ...imageContents,
-          ],
-        },
-      ],
-      max_tokens: 1200,
-      temperature: 0.3,
-    });
+              },
+              ...imageContents,
+            ],
+          },
+        ],
+        max_tokens: 1200,
+        temperature: 0.3,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "AI service unavailable";
+      return NextResponse.json({ error: `AI service error: ${msg}` }, { status: 503 });
+    }
 
     const raw = completion.choices[0].message.content || "{}";
     const jsonMatch = raw.match(/\{[\s\S]*\}/);

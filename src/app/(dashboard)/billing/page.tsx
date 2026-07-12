@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Check, Zap, Star, Building2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface PlanCard {
   id: "free" | "pro" | "agency";
@@ -18,10 +16,26 @@ interface BillingData {
   plans: PlanCard[];
 }
 
-const PLAN_ICONS: Record<string, React.ReactNode> = {
-  free: <Zap className="w-5 h-5" />,
-  pro: <Star className="w-5 h-5" />,
-  agency: <Building2 className="w-5 h-5" />,
+interface UsageItem {
+  label: string;
+  usedKey: string;
+  limitKey: string;
+  color: string;
+}
+
+const USAGE_ROWS: UsageItem[] = [
+  { label: "Assets generated", usedKey: "logo",    limitKey: "logoGenerations",    color: "var(--terra)" },
+  { label: "Brand audits",     usedKey: "audit",   limitKey: "auditRuns",           color: "var(--leaf)" },
+  { label: "Guardian checks",  usedKey: "guardian",limitKey: "guardianRuns",        color: "var(--olive)" },
+];
+
+const PLAN_STYLE: Record<string, {
+  border: string; check: string; featured: boolean;
+  btnBg: string; btnFg: string; btnBorder: string;
+}> = {
+  free:   { border: "1px solid var(--line)",  check: "var(--leaf)", featured: false, btnBg: "var(--surf2)",  btnFg: "var(--muted)", btnBorder: "1px solid var(--line)" },
+  pro:    { border: "2px solid var(--sig)",   check: "var(--sig)",  featured: true,  btnBg: "var(--sig)",    btnFg: "var(--onSig)", btnBorder: "none" },
+  agency: { border: "1px solid var(--line)",  check: "var(--terra)",featured: false, btnBg: "transparent",  btnFg: "var(--ink)",   btnBorder: "1px solid var(--ink)" },
 };
 
 export default function BillingPage() {
@@ -30,6 +44,9 @@ export default function BillingPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
   const [notice, setNotice] = useState("");
+  const [cycle, setCycle] = useState<"monthly" | "yearly">("monthly");
+  const [usageThis, setUsageThis] = useState<Record<string, number> | null>(null);
+  const [planLimits, setPlanLimits] = useState<Record<string, number> | null>(null);
   const { update } = useSession();
 
   function load() {
@@ -40,9 +57,20 @@ export default function BillingPage() {
       .finally(() => setLoading(false));
   }
 
-  useEffect(load, []);
+  useEffect(() => {
+    load();
+    // fetch usage data for the meter bars
+    fetch("/api/analytics")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d.error) {
+          setUsageThis(d.usageThisMonth ?? {});
+          setPlanLimits(d.plan?.limits ?? {});
+        }
+      })
+      .catch(() => {});
+  }, []);
 
-  // Handle the return from Stripe Checkout.
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     if (p.get("upgraded")) {
@@ -60,20 +88,15 @@ export default function BillingPage() {
     setNotice("");
     try {
       if (plan === "pro" || plan === "agency") {
-        // Paid plans → Stripe Checkout. Plan state is set by the webhook on success.
         const res = await fetch("/api/billing/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ plan }),
         });
         const d = await res.json();
-        if (res.ok && d.url) {
-          window.location.href = d.url; // redirect to Stripe
-          return;
-        }
+        if (res.ok && d.url) { window.location.href = d.url; return; }
         setNotice(d.error || "Could not start checkout.");
       } else {
-        // Downgrade to free is handled by cancelling the subscription in the portal.
         setNotice("To move to Free, cancel your subscription from the billing portal.");
       }
     } catch {
@@ -81,14 +104,6 @@ export default function BillingPage() {
     } finally {
       setBusy("");
     }
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
-      </div>
-    );
   }
 
   async function openPortal() {
@@ -105,93 +120,200 @@ export default function BillingPage() {
     }
   }
 
-  if (error || !data) {
-    return <div className="p-8 text-center text-error">{error || "Something went wrong"}</div>;
+  const onPaidPlan = data?.current.plan === "pro" || data?.current.plan === "agency";
+  const currentPlan = data?.plans.find((p) => p.isCurrent);
+
+  const displayPrice = (pkr: number) => {
+    if (pkr === 0) return "Rs 0";
+    const p = cycle === "yearly" ? Math.round(pkr * 0.8) : pkr;
+    return "Rs " + p.toLocaleString();
+  };
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 260 }}>
+        <div style={{ width: 40, height: 40, borderRadius: "50%", border: "3px solid var(--line)", borderTop: "3px solid var(--sig)", animation: "ds-spin 1s linear infinite" }} />
+      </div>
+    );
   }
 
-  const onPaidPlan = data.current.plan === "pro" || data.current.plan === "agency";
+  if (error || !data) {
+    return (
+      <div style={{ padding: "60px 20px", textAlign: "center", fontFamily: "'Newsreader', serif", color: "var(--red)" }}>
+        {error || "Something went wrong"}
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-text">Billing &amp; Plans</h1>
-        <p className="text-text-muted mt-1">
-          You&apos;re currently on the{" "}
-          <span className="text-primary-light font-medium capitalize">{data.current.plan}</span> plan.
-        </p>
-      </div>
+    <div style={{ padding: "clamp(24px, 3.5vw, 44px) clamp(20px, 4vw, 52px) 90px" }}>
+      <div style={{ maxWidth: 1040, margin: "0 auto" }}>
 
-      {notice && (
-        <div className="rounded-xl border border-border bg-surface-2 px-4 py-3 text-sm text-text">{notice}</div>
-      )}
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, flexWrap: "wrap", marginBottom: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <span style={{ width: 46, height: 46, borderRadius: 13, background: "color-mix(in oklab, var(--sig) 14%, transparent)", color: "var(--sig)", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.7" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/></svg>
+            </span>
+            <div>
+              <h1 style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: "clamp(26px, 3vw, 36px)", lineHeight: 1.05, letterSpacing: "-0.03em", margin: 0 }}>
+                Plans &amp; <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, color: "var(--sig)" }}>Billing</span>
+              </h1>
+              <p style={{ fontFamily: "'Newsreader', serif", fontSize: 16, color: "var(--muted)", margin: "5px 0 0" }}>
+                Manage your subscription, usage, and invoices.
+              </p>
+            </div>
+          </div>
+        </div>
 
-      {onPaidPlan && (
-        <button
-          onClick={openPortal}
-          disabled={busy === "portal"}
-          className="text-sm text-primary-light hover:underline disabled:opacity-50"
-        >
-          {busy === "portal" ? "Opening…" : "Manage subscription, invoices & cancellation →"}
-        </button>
-      )}
+        {/* Notice banner */}
+        {notice && (
+          <div style={{ borderRadius: 14, border: "1px solid var(--line)", background: "var(--surf2)", padding: "12px 16px", fontFamily: "'General Sans'", fontSize: 14, color: "var(--ink)", marginBottom: 20 }}>
+            {notice}
+          </div>
+        )}
 
-      <div className="grid md:grid-cols-3 gap-5">
-        {data.plans.map((p) => (
-          <div
-            key={p.id}
-            className={cn(
-              "rounded-2xl border bg-surface p-6 flex flex-col",
-              p.isCurrent ? "border-primary shadow-glow-primary" : "border-border",
-              p.id === "pro" && !p.isCurrent && "border-primary/40"
+        {/* Top 2-col: current plan + usage */}
+        <div className="bl-top" style={{ display: "grid", gridTemplateColumns: "1fr 1.3fr", gap: 16, marginBottom: 26 }}>
+
+          {/* Current plan card */}
+          <div className="bl-card" style={{ border: "1px solid var(--line)", background: "var(--sig)", color: "var(--onSig)", borderRadius: 18, padding: 22, position: "relative", overflow: "hidden" }}>
+            <svg width="130" height="130" viewBox="0 0 40 40" fill="rgba(255,255,255,0.07)" style={{ position: "absolute", bottom: -34, right: -30, animation: "ds-spin 26s linear infinite" }} aria-hidden="true"><path d="M20 0c3 13 7 17 20 20-13 3-17 7-20 20-3-13-7-17-20-20C13 17 17 13 20 0Z"/></svg>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, letterSpacing: ".14em", textTransform: "uppercase" as const, opacity: 0.8, marginBottom: 12 }}>Current plan</div>
+            <div style={{ fontFamily: "'General Sans'", fontWeight: 700, fontSize: 30, letterSpacing: "-0.02em" }}>
+              {currentPlan?.name ?? data.current.plan}
+            </div>
+            <div style={{ fontFamily: "'Newsreader', serif", fontStyle: "italic", fontSize: 15, opacity: 0.85, margin: "6px 0 18px" }}>
+              {currentPlan && currentPlan.price.pkr > 0
+                ? `Rs ${currentPlan.price.pkr.toLocaleString()} / month`
+                : "Rs 0 / month · renews never"}
+            </div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, opacity: 0.8 }}>
+              {data.current.activatedAt
+                ? `Active since: ${new Date(data.current.activatedAt).toLocaleDateString()}`
+                : "Next invoice: —"}
+            </div>
+            {onPaidPlan && (
+              <button
+                onClick={openPortal}
+                disabled={busy === "portal"}
+                style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 14px", borderRadius: 999, border: "1px solid rgba(255,255,255,.35)", background: "rgba(255,255,255,.15)", color: "var(--onSig)", fontFamily: "'General Sans'", fontWeight: 600, fontSize: 13, cursor: "pointer", opacity: busy === "portal" ? 0.5 : 1 }}
+              >
+                {busy === "portal" ? "Opening…" : "Manage subscription →"}
+              </button>
             )}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-primary-light">
-                {PLAN_ICONS[p.id]}
-                <span className="font-semibold text-text">{p.name}</span>
-              </div>
-              {p.isCurrent && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/15 text-primary-light border border-primary/20">
-                  Current
-                </span>
-              )}
+          </div>
+
+          {/* Usage meters */}
+          <div className="bl-card" style={{ border: "1px solid var(--line)", background: "var(--surface)", borderRadius: 18, padding: 22 }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--muted)", marginBottom: 16 }}>This month&apos;s usage</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
+              {USAGE_ROWS.map((row) => {
+                const used = usageThis?.[row.usedKey] ?? 0;
+                const cap = planLimits?.[row.limitKey] ?? 0;
+                const unlimited = cap === -1;
+                const pct = unlimited ? 8 : cap === 0 ? 100 : Math.min(100, (used / cap) * 100);
+                return (
+                  <div key={row.usedKey}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7 }}>
+                      <span style={{ fontFamily: "'General Sans'", fontSize: 14, fontWeight: 600 }}>{row.label}</span>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "var(--muted)" }}>
+                        {usageThis === null ? "—" : `${used} / ${unlimited ? "∞" : cap}`}
+                      </span>
+                    </div>
+                    <div style={{ height: 8, borderRadius: 999, background: "var(--surf2)", overflow: "hidden" }}>
+                      <div style={{ width: `${Math.max(pct, 2)}%`, height: "100%", background: row.color, borderRadius: 999, transition: "width .8s cubic-bezier(.3,.7,.3,1)" }} />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
+          </div>
+        </div>
 
-            <div className="mt-4">
-              <span className="text-3xl font-bold text-text">
-                {p.price.pkr === 0 ? "Free" : `PKR ${p.price.pkr.toLocaleString()}`}
-              </span>
-              {p.price.pkr > 0 && <span className="text-text-dim text-sm"> /mo · ${p.price.usd}</span>}
-            </div>
-
-            <ul className="mt-5 space-y-2 flex-1">
-              {p.features.map((f) => (
-                <li key={f} className="flex items-start gap-2 text-sm text-text-muted">
-                  <Check className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                  {f}
-                </li>
-              ))}
-            </ul>
-
-            <button
-              disabled={p.isCurrent || busy === p.id}
-              onClick={() => choosePlan(p.id)}
-              className={cn(
-                "mt-6 h-10 rounded-xl text-sm font-medium transition-colors",
-                p.isCurrent
-                  ? "bg-surface-2 text-text-dim cursor-default"
-                  : "bg-primary text-white hover:bg-primary-hover"
-              )}
-            >
-              {p.isCurrent ? "Current plan" : busy === p.id ? "…" : `Switch to ${p.name}`}
+        {/* Monthly / Yearly toggle */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 12 }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: ".16em", textTransform: "uppercase" as const, color: "var(--muted)" }}>Choose a plan</div>
+          <div style={{ display: "inline-flex", padding: 4, borderRadius: 999, background: "var(--surf2)", border: "1px solid var(--line)" }}>
+            <button className={`bl-toggle${cycle === "monthly" ? " sel" : ""}`} onClick={() => setCycle("monthly")}>Monthly</button>
+            <button className={`bl-toggle${cycle === "yearly" ? " sel" : ""}`} onClick={() => setCycle("yearly")}>
+              Yearly <span style={{ color: "var(--terra)" }}>–20%</span>
             </button>
           </div>
-        ))}
-      </div>
+        </div>
 
-      <p className="text-xs text-text-dim text-center">
-        Payments are not yet live. Plan switching is disabled until checkout is integrated.
-      </p>
+        {/* Plan cards */}
+        <div className="bl-plans" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+          {data.plans.map((p, idx) => {
+            const s = PLAN_STYLE[p.id] ?? PLAN_STYLE.free;
+            return (
+              <div
+                key={p.id}
+                className="bl-plan bl-card"
+                style={{ border: s.border, background: "var(--surface)", color: "var(--ink)", borderRadius: 18, padding: 24, position: "relative", animationDelay: `${idx * 0.06}s` }}
+              >
+                {s.featured && (
+                  <span style={{ position: "absolute", top: 16, right: 16, fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase" as const, background: "var(--terra)", color: "#fff", padding: "4px 9px", borderRadius: 999 }}>Popular</span>
+                )}
+                <div style={{ fontFamily: "'General Sans'", fontWeight: 700, fontSize: 19 }}>{p.name}</div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 4, margin: "12px 0 4px" }}>
+                  <span style={{ fontFamily: "'General Sans'", fontWeight: 700, fontSize: 34, letterSpacing: "-0.02em" }}>{displayPrice(p.price.pkr)}</span>
+                  <span style={{ fontSize: 13, color: "var(--muted)" }}>{cycle === "yearly" ? "/mo · yearly" : "/month"}</span>
+                </div>
+                {p.price.usd > 0 && (
+                  <div style={{ fontFamily: "'Newsreader', serif", fontStyle: "italic", fontSize: 14, color: "var(--muted)", marginBottom: 18 }}>${p.price.usd} USD</div>
+                )}
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 22 }}>
+                  {p.features.map((f) => (
+                    <div key={f} style={{ display: "flex", gap: 9, alignItems: "flex-start", fontSize: 13.5 }}>
+                      <span style={{ color: s.check, flexShrink: 0 }}>✓</span>
+                      {f}
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => !p.isCurrent && choosePlan(p.id)}
+                  disabled={p.isCurrent || busy === p.id}
+                  style={{ width: "100%", padding: "12px", borderRadius: 11, border: s.btnBorder, background: p.isCurrent ? "var(--surf2)" : s.btnBg, color: p.isCurrent ? "var(--muted)" : s.btnFg, fontFamily: "'General Sans'", fontWeight: 600, fontSize: 14, cursor: p.isCurrent || busy === p.id ? "default" : "pointer", opacity: busy === p.id ? 0.5 : 1 }}
+                >
+                  {p.isCurrent ? "Current plan" : busy === p.id ? "…" : `Switch to ${p.name}`}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Invoice / portal section */}
+        <div className="bl-card" style={{ border: "1px solid var(--line)", background: "var(--surface)", borderRadius: 18, padding: "clamp(18px, 2.5vw, 24px)", marginTop: 26 }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--muted)", marginBottom: 16 }}>Invoice history</div>
+          {onPaidPlan ? (
+            <div>
+              <p style={{ fontFamily: "'Newsreader', serif", fontSize: 14, color: "var(--muted)", marginBottom: 14 }}>
+                View and download all invoices from the Stripe billing portal.
+              </p>
+              <button
+                onClick={openPortal}
+                disabled={busy === "portal"}
+                style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 11, border: "1px solid var(--line)", background: "var(--surf2)", color: "var(--ink)", fontFamily: "'General Sans'", fontWeight: 600, fontSize: 14, cursor: "pointer", opacity: busy === "portal" ? 0.5 : 1 }}
+              >
+                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6zM15 2v5h5"/></svg>
+                {busy === "portal" ? "Opening…" : "View invoices & manage subscription"}
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 0", borderTop: "1px solid var(--line)" }}>
+              <span style={{ width: 34, height: 34, borderRadius: 9, background: "var(--surf2)", color: "var(--muted)", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6zM15 2v5h5"/></svg>
+              </span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: "'General Sans'", fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>No invoices yet</div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "var(--muted)" }}>You&apos;re on the Free plan</div>
+              </div>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: ".06em", color: "var(--leaf)", background: "color-mix(in oklab, var(--leaf) 13%, transparent)", padding: "4px 9px", borderRadius: 999 }}>Free</span>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

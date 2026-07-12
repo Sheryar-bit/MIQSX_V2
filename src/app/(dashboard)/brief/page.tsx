@@ -1,10 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import {
-  MessageSquare, AlertTriangle, CheckCircle, HelpCircle,
-  Tag, Calendar, DollarSign, Users, Lightbulb, ChevronRight
-} from "lucide-react";
 
 interface BriefResult {
   projectTitle: string;
@@ -39,6 +35,40 @@ Ahmed: aur ha, full brand identity bhi chahiye, social media ke liye bhi
 Me: matlab logo k saath kya kya chahiye?
 Ahmed: bas logo, aur shayad business card bhi`;
 
+const PREVIEW_BUBBLES = [
+  { text: "salam, mujhe apni bakery ke liye branding chahiye", time: "10:02" },
+  { text: "brown rakhna… nahi cream… kuch homemade type feel", time: "10:03" },
+  { text: "logo chahiye aur insta posts bhi. budget zyada nahi", time: "10:04" },
+  { text: "Eid se pehle ready karo. mums ko target karna hai", time: "10:05" },
+];
+
+function Chip({ label }: { label: string }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", fontFamily: "'General Sans'", fontSize: 13, fontWeight: 500, padding: "5px 11px", borderRadius: 999, background: "var(--surf2)", border: "1px solid var(--line)", color: "var(--ink)" }}>
+      {label}
+    </span>
+  );
+}
+
+function BriefRow({ label, delay, children }: { label: string; delay: string; children: React.ReactNode }) {
+  return (
+    <div className="bp-row" style={{ animationDelay: delay }}>
+      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: ".12em", textTransform: "uppercase" as const, color: "var(--muted)", marginBottom: 6 }}>
+        {label}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function TextBlock({ value }: { value: string }) {
+  return (
+    <div style={{ fontSize: 14, lineHeight: 1.5, color: "var(--ink)", background: "var(--surf2)", borderRadius: 10, padding: "10px 13px", border: "1px solid var(--line)" }}>
+      {value}
+    </div>
+  );
+}
+
 export default function BriefPage() {
   const [conversation, setConversation] = useState("");
   const [loading, setLoading] = useState(false);
@@ -61,217 +91,267 @@ export default function BriefPage() {
   };
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
-      <div className="mb-8 flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-green-500/20 flex items-center justify-center">
-          <MessageSquare className="h-5 w-5 text-green-400" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-text">WhatsApp Brief Parser</h1>
-          <p className="text-sm text-text-muted">Paste a messy client conversation — AI extracts a clean brief</p>
-        </div>
-      </div>
+    <div style={{ padding: "clamp(24px, 3.5vw, 44px) clamp(20px, 4vw, 52px) 90px" }}>
+      <div style={{ maxWidth: 1060, margin: "0 auto" }}>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Input */}
-        <div className="space-y-4">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-semibold text-text-dim uppercase tracking-widest">
-                Paste Conversation
-              </label>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, flexWrap: "wrap", marginBottom: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <span style={{ width: 46, height: 46, borderRadius: 13, background: "color-mix(in oklab, var(--terra) 14%, transparent)", color: "var(--terra)", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M.06 24l1.68-6.16A11.87 11.87 0 0 1 .13 11.9C.12 5.33 5.46 0 12.03 0a11.82 11.82 0 0 1 8.42 3.49 11.82 11.82 0 0 1 3.48 8.42c0 6.57-5.34 11.9-11.91 11.9a11.9 11.9 0 0 1-5.7-1.45L.06 24z"/></svg>
+            </span>
+            <div>
+              <h1 style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: "clamp(26px, 3vw, 36px)", lineHeight: 1.05, letterSpacing: "-0.03em", margin: 0 }}>
+                Brief <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, color: "var(--terra)" }}>Parser</span>
+              </h1>
+              <p style={{ fontFamily: "'Newsreader', serif", fontSize: 16, color: "var(--muted)", margin: "5px 0 0" }}>
+                Paste the messy WhatsApp brief. Get a clean, structured one.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 2-col layout */}
+        <div className="bp-layout">
+
+          {/* Left: chat preview + input */}
+          <div style={{ borderRadius: 20, border: "1px solid var(--line)", background: "var(--surface)", padding: "clamp(18px, 2.5vw, 24px)", display: "flex", flexDirection: "column", gap: 14 }}>
+
+            {/* WA header */}
+            <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="#25D366"><path d="M.06 24l1.68-6.16A11.87 11.87 0 0 1 .13 11.9C.12 5.33 5.46 0 12.03 0a11.82 11.82 0 0 1 8.42 3.49 11.82 11.82 0 0 1 3.48 8.42c0 6.57-5.34 11.9-11.91 11.9a11.9 11.9 0 0 1-5.7-1.45L.06 24z"/></svg>
+              <span style={{ fontFamily: "'General Sans'", fontWeight: 700, fontSize: 14, color: "var(--ink)" }}>Client conversation</span>
+            </div>
+
+            {/* Chat bubble preview */}
+            <div style={{ background: "var(--wa)", borderRadius: 14, padding: "12px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
+              {PREVIEW_BUBBLES.map((b, i) => (
+                <div key={i} style={{ alignSelf: "flex-start", maxWidth: "88%", background: "var(--surface)", borderRadius: "4px 13px 13px 13px", padding: "8px 12px", fontSize: 13, lineHeight: 1.5, color: "var(--ink)", boxShadow: "0 1px 4px -2px rgba(0,0,0,.25)" }}>
+                  {b.text}
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "var(--muted)", textAlign: "right", marginTop: 3 }}>{b.time}</div>
+                </div>
+              ))}
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "var(--muted)", textAlign: "center", marginTop: 2, letterSpacing: ".06em" }}>— paste your own below —</div>
+            </div>
+
+            {/* Textarea label row */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <label style={{ fontFamily: "'General Sans'", fontSize: 12, fontWeight: 600, color: "var(--muted)" }}>Paste your conversation</label>
               <button
                 onClick={() => setConversation(EXAMPLE)}
-                className="text-xs text-primary-light hover:underline"
+                style={{ fontFamily: "'General Sans'", fontSize: 12, color: "var(--sig)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
               >
                 Load example
               </button>
             </div>
+
             <textarea
               value={conversation}
               onChange={(e) => setConversation(e.target.value)}
-              placeholder="Paste your WhatsApp conversation here — works with English, Urdu, and Roman Urdu..."
-              rows={16}
-              className="w-full rounded-xl bg-surface-2 border border-border px-4 py-3 text-sm text-text placeholder:text-text-dim resize-none focus:outline-none focus:border-primary/50 font-mono"
+              placeholder="Paste your WhatsApp conversation here — works with English, Urdu, and Roman Urdu…"
+              className="gf-field"
+              style={{ resize: "vertical", minHeight: 140, fontFamily: "'General Sans', sans-serif" }}
             />
-          </div>
 
-          <button
-            onClick={handleSubmit}
-            disabled={loading || conversation.trim().length < 20}
-            className="w-full py-3 rounded-xl bg-gradient-brand text-white font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
-          >
-            {loading ? "Parsing brief..." : "Extract Structured Brief"}
-          </button>
-
-          <div className="rounded-xl bg-surface-2 border border-border p-4">
-            <p className="text-xs font-semibold text-text-dim mb-2">Works with</p>
-            <div className="flex flex-wrap gap-2">
+            {/* Language hint chips */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {["English", "Roman Urdu", "Urdu mixed", "Punjabi slang", "Code-switching"].map((t) => (
-                <span key={t} className="text-xs px-2 py-1 rounded-full bg-surface border border-border text-text-dim">
-                  {t}
-                </span>
+                <span key={t} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "var(--muted)", background: "var(--surf2)", border: "1px solid var(--line)", borderRadius: 999, padding: "3px 9px" }}>{t}</span>
               ))}
             </div>
+
+            {/* Submit */}
+            <button
+              onClick={handleSubmit}
+              disabled={loading || conversation.trim().length < 20}
+              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 9, padding: "14px", borderRadius: 12, border: "none", background: loading || conversation.trim().length < 20 ? "var(--surf2)" : "var(--terra)", color: loading || conversation.trim().length < 20 ? "var(--muted)" : "#fff", fontFamily: "'General Sans'", fontWeight: 600, fontSize: 15, cursor: loading || conversation.trim().length < 20 ? "not-allowed" : "pointer", opacity: loading || conversation.trim().length < 20 ? 0.7 : 1 }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M.06 24l1.68-6.16A11.87 11.87 0 0 1 .13 11.9C.12 5.33 5.46 0 12.03 0a11.82 11.82 0 0 1 8.42 3.49 11.82 11.82 0 0 1 3.48 8.42c0 6.57-5.34 11.9-11.91 11.9a11.9 11.9 0 0 1-5.7-1.45L.06 24z"/></svg>
+              {loading ? "Parsing brief…" : "Parse this brief"}
+            </button>
+          </div>
+
+          {/* Right: output panel */}
+          <div style={{ borderRadius: 20, border: "1px solid var(--line)", background: "var(--surface)", minHeight: 460, display: "flex", flexDirection: "column", padding: "clamp(18px, 2.5vw, 24px)", position: "relative", overflow: "hidden" }}>
+
+            {/* Decorative star */}
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 40 40" fill="var(--terra)" style={{ position: "absolute", top: 16, right: 18, animation: "ds-twinkle 3.2s ease-in-out infinite" }}><path d="M20 0c3 13 7 17 20 20-13 3-17 7-20 20-3-13-7-17-20-20C13 17 17 13 20 0Z"/></svg>
+
+            {/* Empty state */}
+            {!result && !loading && (
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", color: "var(--muted)" }}>
+                <span style={{ display: "inline-flex", width: 64, height: 64, borderRadius: 16, background: "var(--surf2)", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="var(--muted)"><path d="M.06 24l1.68-6.16A11.87 11.87 0 0 1 .13 11.9C.12 5.33 5.46 0 12.03 0a11.82 11.82 0 0 1 8.42 3.49 11.82 11.82 0 0 1 3.48 8.42c0 6.57-5.34 11.9-11.91 11.9a11.9 11.9 0 0 1-5.7-1.45L.06 24z" opacity=".3"/></svg>
+                </span>
+                <div style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: 16, color: "var(--ink)" }}>Structured brief appears here</div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, marginTop: 6 }}>parse the messages to begin</div>
+              </div>
+            )}
+
+            {/* Loading state */}
+            {loading && (
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 14 }}>
+                <div style={{ width: 44, height: 44, borderRadius: "50%", border: "3px solid var(--line)", borderTop: "3px solid var(--terra)", animation: "ds-spin 1s linear infinite" }} />
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, letterSpacing: ".1em", color: "var(--terra)" }}>PARSING BRIEF…</div>
+                <div style={{ fontFamily: "'Newsreader', serif", fontStyle: "italic", fontSize: 14, color: "var(--muted)" }}>extracting goals · colors · audience · deadline</div>
+              </div>
+            )}
+
+            {/* Results */}
+            {result && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
+
+                {/* Parsed badge + title */}
+                <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: ".08em", color: "var(--leaf)", background: "color-mix(in oklab, var(--leaf) 13%, transparent)", padding: "4px 10px", borderRadius: 999 }}>
+                    ✓ parsed
+                  </span>
+                  <span style={{ fontFamily: "'General Sans'", fontWeight: 700, fontSize: 17, color: "var(--ink)" }}>{result.projectTitle}</span>
+                  {result.language && (
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: "var(--muted)", background: "var(--surf2)", border: "1px solid var(--line)", borderRadius: 999, padding: "3px 8px" }}>{result.language}</span>
+                  )}
+                </div>
+
+                {/* Project type + industry */}
+                {(result.projectType || result.industry) && (
+                  <BriefRow label="Project" delay="0s">
+                    <TextBlock value={[result.projectType, result.industry, result.clientName ? `Client: ${result.clientName}` : ""].filter(Boolean).join(" · ")} />
+                  </BriefRow>
+                )}
+
+                {/* Target audience */}
+                {result.targetAudience && (
+                  <BriefRow label="Target audience" delay=".06s">
+                    <TextBlock value={result.targetAudience} />
+                  </BriefRow>
+                )}
+
+                {/* Deliverables */}
+                {result.deliverables?.length > 0 && (
+                  <BriefRow label="Deliverables" delay=".12s">
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                      {result.deliverables.map((d, i) => <Chip key={i} label={d} />)}
+                    </div>
+                  </BriefRow>
+                )}
+
+                {/* Colors */}
+                {((result.colors?.mentioned?.length ?? 0) + (result.colors?.implied?.length ?? 0)) > 0 && (
+                  <BriefRow label="Colors" delay=".18s">
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                      {[...(result.colors?.mentioned ?? []), ...(result.colors?.implied ?? [])].map((c, i) => <Chip key={i} label={c} />)}
+                    </div>
+                  </BriefRow>
+                )}
+
+                {/* Style adjectives */}
+                {result.style?.adjectives?.length > 0 && (
+                  <BriefRow label="Tone & style" delay=".24s">
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                      {result.style.adjectives.map((a, i) => <Chip key={i} label={a} />)}
+                    </div>
+                  </BriefRow>
+                )}
+
+                {/* Budget + Deadline */}
+                <div className="bp-row" style={{ animationDelay: ".3s", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: ".12em", textTransform: "uppercase" as const, color: "var(--muted)", marginBottom: 6 }}>Budget</div>
+                    <TextBlock value={result.budget?.amount || (result.budget?.mentioned ? result.budget.flexibility || "Mentioned" : "Not specified")} />
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: ".12em", textTransform: "uppercase" as const, color: "var(--muted)", marginBottom: 6 }}>Deadline</div>
+                    <TextBlock value={result.deadline?.date || (result.deadline?.mentioned ? result.deadline.urgency || "Mentioned" : "Not specified")} />
+                  </div>
+                </div>
+
+                {/* Implied preferences */}
+                {result.impliedPreferences?.length > 0 && (
+                  <BriefRow label="Implied preferences" delay=".36s">
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {result.impliedPreferences.map((p, i) => (
+                        <div key={i} style={{ fontFamily: "'Newsreader', serif", fontSize: 13.5, color: "var(--muted)", paddingLeft: 13, borderLeft: "2px solid var(--line)" }}>{p}</div>
+                      ))}
+                    </div>
+                  </BriefRow>
+                )}
+
+                {/* Contradictions */}
+                {result.contradictions?.length > 0 && (
+                  <BriefRow label="Contradictions" delay=".42s">
+                    <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                      {result.contradictions.map((c, i) => (
+                        <div key={i} style={{ borderRadius: 11, background: "color-mix(in oklab, var(--terra) 7%, var(--surface))", border: "1px solid color-mix(in oklab, var(--terra) 22%, var(--line))", padding: "9px 13px" }}>
+                          <div style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: 12.5, color: "var(--terra)", marginBottom: 3 }}>{c.issue}</div>
+                          <div style={{ fontFamily: "'Newsreader', serif", fontSize: 12, color: "var(--muted)" }}>"{c.messageA}" vs "{c.messageB}"</div>
+                          {c.recommendation && <div style={{ fontFamily: "'General Sans'", fontSize: 12, color: "var(--terra)", marginTop: 4, opacity: 0.8 }}>Resolve: {c.recommendation}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  </BriefRow>
+                )}
+
+                {/* Clarification priority */}
+                {result.clarificationPriority?.length > 0 && (
+                  <BriefRow label="Ask client first" delay=".48s">
+                    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                      {result.clarificationPriority.map((q, i) => (
+                        <div key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
+                          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 11, color: "var(--sig)", flexShrink: 0, marginTop: 2 }}>{i + 1}.</span>
+                          <span style={{ fontFamily: "'Newsreader', serif", fontSize: 13.5, color: "var(--muted)" }}>{q}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </BriefRow>
+                )}
+
+                {/* Missing info */}
+                {result.missingInfo?.length > 0 && (
+                  <BriefRow label="Missing info" delay=".54s">
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {result.missingInfo.map((m, i) => (
+                        <div key={i} style={{ fontFamily: "'Newsreader', serif", fontSize: 13, color: "var(--muted)", paddingLeft: 13, borderLeft: "2px solid var(--line)" }}>{m.question}</div>
+                      ))}
+                    </div>
+                  </BriefRow>
+                )}
+
+                {/* Red flags */}
+                {result.redFlags?.length > 0 && (
+                  <BriefRow label="Red flags" delay=".6s">
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                      {result.redFlags.map((f, i) => (
+                        <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "'General Sans'", fontSize: 13, fontWeight: 500, padding: "5px 11px", borderRadius: 999, background: "color-mix(in oklab, var(--red) 8%, var(--surface))", border: "1px solid color-mix(in oklab, var(--red) 22%, var(--line))", color: "var(--red)" }}>⚠ {f}</span>
+                      ))}
+                    </div>
+                  </BriefRow>
+                )}
+
+                {/* Start brand CTA */}
+                <a
+                  href="/onboarding"
+                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 9, padding: "13px", borderRadius: 12, background: "var(--sig)", color: "var(--onSig)", fontFamily: "'General Sans'", fontWeight: 600, fontSize: 15, textDecoration: "none", marginTop: 4 }}
+                >
+                  Start brand with this brief
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </a>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Output */}
-        <div>
-          {!result && !loading && (
-            <div className="h-full flex items-center justify-center rounded-xl border border-dashed border-border bg-surface-2/20 p-8 text-center min-h-64">
-              <div>
-                <MessageSquare className="h-12 w-12 text-text-dim mx-auto mb-3 opacity-20" />
-                <p className="text-text-dim text-sm">Structured brief will appear here</p>
-              </div>
+        {/* Structured brief — full width below */}
+        {result?.structuredBrief && (
+          <div style={{ marginTop: 22, borderRadius: 20, border: "1px solid var(--line)", background: "var(--surface)", padding: "clamp(18px, 2.5vw, 26px)" }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: ".16em", textTransform: "uppercase" as const, color: "var(--muted)", marginBottom: 12 }}>
+              Structured Brief — Ready to Share
             </div>
-          )}
-
-          {loading && (
-            <div className="flex flex-col items-center justify-center min-h-64 gap-4">
-              <div className="h-10 w-10 rounded-full border-2 border-green-400 border-t-transparent animate-spin" />
-              <p className="text-text-dim text-sm">Reading between the lines...</p>
-            </div>
-          )}
-
-          {result && (
-            <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-1">
-              {/* Project header */}
-              <div className="rounded-xl bg-surface-2 border border-border p-4">
-                <h2 className="font-bold text-text text-lg">{result.projectTitle}</h2>
-                {result.clientName && <p className="text-sm text-text-dim">Client: {result.clientName}</p>}
-                <div className="flex gap-2 mt-2 flex-wrap">
-                  <span className="text-xs px-2 py-1 rounded-full bg-primary/15 border border-primary/30 text-primary-light">
-                    {result.projectType}
-                  </span>
-                  <span className="text-xs px-2 py-1 rounded-full bg-surface border border-border text-text-dim">
-                    {result.industry}
-                  </span>
-                </div>
-              </div>
-
-              {/* Key details grid */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl bg-surface-2 border border-border p-3">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <DollarSign className="h-3.5 w-3.5 text-text-dim" />
-                    <span className="text-xs font-semibold text-text-dim">Budget</span>
-                  </div>
-                  <p className="text-sm text-text">{result.budget?.amount || "Not specified"}</p>
-                  <p className="text-xs text-text-dim">{result.budget?.flexibility}</p>
-                </div>
-                <div className="rounded-xl bg-surface-2 border border-border p-3">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <Calendar className="h-3.5 w-3.5 text-text-dim" />
-                    <span className="text-xs font-semibold text-text-dim">Deadline</span>
-                  </div>
-                  <p className="text-sm text-text">{result.deadline?.date || "Not specified"}</p>
-                  <p className="text-xs text-text-dim">{result.deadline?.urgency}</p>
-                </div>
-              </div>
-
-              {/* Deliverables */}
-              {result.deliverables?.length > 0 && (
-                <div className="rounded-xl bg-surface-2 border border-border p-3">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <Tag className="h-3.5 w-3.5 text-text-dim" />
-                    <span className="text-xs font-semibold text-text-dim">Deliverables</span>
-                  </div>
-                  <ul className="space-y-1">
-                    {result.deliverables.map((d, i) => (
-                      <li key={i} className="flex items-center gap-2 text-sm text-text-muted">
-                        <CheckCircle className="h-3.5 w-3.5 text-green-400 flex-shrink-0" />
-                        {d}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Target audience */}
-              {result.targetAudience && (
-                <div className="rounded-xl bg-surface-2 border border-border p-3">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <Users className="h-3.5 w-3.5 text-text-dim" />
-                    <span className="text-xs font-semibold text-text-dim">Target Audience</span>
-                  </div>
-                  <p className="text-sm text-text-muted">{result.targetAudience}</p>
-                </div>
-              )}
-
-              {/* Contradictions */}
-              {result.contradictions?.length > 0 && (
-                <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-3">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
-                    <span className="text-xs font-semibold text-amber-400">Contradictions Found</span>
-                  </div>
-                  {result.contradictions.map((c, i) => (
-                    <div key={i} className="mb-2 last:mb-0">
-                      <p className="text-sm font-medium text-amber-300">{c.issue}</p>
-                      <p className="text-xs text-text-muted mt-0.5">"{c.messageA}" vs "{c.messageB}"</p>
-                      <p className="text-xs text-amber-400/70 mt-0.5">Resolve: {c.recommendation}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Missing info */}
-              {result.missingInfo?.length > 0 && (
-                <div className="rounded-xl bg-surface-2 border border-border p-3">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <HelpCircle className="h-3.5 w-3.5 text-text-dim" />
-                    <span className="text-xs font-semibold text-text-dim">Missing Info</span>
-                  </div>
-                  {result.missingInfo.map((m, i) => (
-                    <div key={i} className="flex items-start gap-2 mb-1 last:mb-0">
-                      <ChevronRight className="h-3.5 w-3.5 text-text-dim flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-text-muted">{m.question}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Red flags */}
-              {result.redFlags?.length > 0 && (
-                <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-3">
-                  <p className="text-xs font-semibold text-red-400 mb-2">Red Flags</p>
-                  {result.redFlags.map((f, i) => (
-                    <div key={i} className="flex items-start gap-2 mb-1 last:mb-0">
-                      <AlertTriangle className="h-3.5 w-3.5 text-red-400 flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-text-muted">{f}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Clarification priority */}
-              {result.clarificationPriority?.length > 0 && (
-                <div className="rounded-xl bg-primary/5 border border-primary/20 p-3">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <Lightbulb className="h-3.5 w-3.5 text-primary-light" />
-                    <span className="text-xs font-semibold text-primary-light">Ask Client First</span>
-                  </div>
-                  {result.clarificationPriority.map((q, i) => (
-                    <div key={i} className="flex items-start gap-2 mb-1.5 last:mb-0">
-                      <span className="text-xs font-bold text-primary-light flex-shrink-0">{i + 1}.</span>
-                      <p className="text-xs text-text-muted">{q}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+            <p style={{ fontFamily: "'Newsreader', serif", fontSize: 15, color: "var(--muted)", lineHeight: 1.65, margin: 0, whiteSpace: "pre-line" }}>
+              {result.structuredBrief}
+            </p>
+          </div>
+        )}
       </div>
-
-      {/* Structured brief */}
-      {result?.structuredBrief && (
-        <div className="mt-6 rounded-2xl bg-surface-2 border border-border p-5">
-          <h3 className="text-sm font-bold text-text mb-3">Structured Brief (Ready to Share)</h3>
-          <p className="text-sm text-text-muted leading-relaxed whitespace-pre-line">{result.structuredBrief}</p>
-        </div>
-      )}
     </div>
   );
 }

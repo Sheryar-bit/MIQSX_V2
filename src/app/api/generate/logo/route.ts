@@ -6,7 +6,7 @@ import type { IconName, FontId } from "@/lib/svg-icons";
 import type { LogoLayout } from "@/lib/logo-composer";
 import { enforceOrgLimit } from "@/lib/org-context";
 import { trackEvent } from "@/lib/analytics";
-import { generateBrandImage, isCloudflareConfigured } from "@/lib/imagegen";
+import { generateBrandImage, isCloudflareConfigured, NsfwPromptError } from "@/lib/imagegen";
 
 // Number of AI logo concepts produced per request (each with a distinct seed).
 const AI_CONCEPT_COUNT = 3;
@@ -88,6 +88,9 @@ export async function POST(req: NextRequest) {
 
     if (images.length === 0) {
       const firstError = results.find((r) => r.status === "rejected") as PromiseRejectedResult | undefined;
+      if (firstError?.reason instanceof NsfwPromptError) {
+        return NextResponse.json({ error: firstError.reason.message }, { status: 400 });
+      }
       console.error("[LOGO/AI]", firstError?.reason);
       return NextResponse.json(
         { error: firstError?.reason instanceof Error ? firstError.reason.message : "AI logo generation failed" },

@@ -36,7 +36,8 @@ const TeamInviteSchema = new Schema<ITeamInvite>(
   { timestamps: true }
 );
 
-TeamInviteSchema.index({ token: 1 });
+// Note: `token` already gets an index via `unique: true` on the field —
+// don't re-declare it here (Mongoose warns about duplicate indexes).
 TeamInviteSchema.index({ email: 1, status: 1 });
 TeamInviteSchema.index({ invitedBy: 1 });
 

@@ -6,7 +6,7 @@ import { fetcher } from "@/lib/fetcher";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider>
+    <SessionProvider refetchOnWindowFocus={false}>
       <SWRConfig
         value={{
           fetcher,

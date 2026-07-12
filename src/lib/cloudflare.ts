@@ -23,6 +23,21 @@ export interface CloudflareImageInput {
 
 const ACCOUNTS_ENDPOINT = "https://api.cloudflare.com/client/v4/accounts";
 
+/**
+ * Thrown when Cloudflare's safety classifier rejects the prompt as NSFW
+ * (Workers AI error code 3030). This is a bad-input condition, not a server
+ * fault, so callers should surface it as a 400 with a "rephrase your prompt"
+ * message rather than a generic 500.
+ */
+export class NsfwPromptError extends Error {
+  constructor(
+    message = "Your prompt was flagged as inappropriate by the image provider's safety filter. Try rephrasing it with different wording."
+  ) {
+    super(message);
+    this.name = "NsfwPromptError";
+  }
+}
+
 /** True when both the account id and API token are present (non-empty). */
 export function isCloudflareConfigured(): boolean {
   return Boolean(process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN);
@@ -71,6 +86,11 @@ export async function generateImage(
         `Cloudflare Workers AI authentication failed (${res.status}). Your CLOUDFLARE_API_TOKEN is invalid or lacks the "Workers AI" permission. ` +
           `Create one at Cloudflare dashboard → My Profile → API Tokens → Create Token → "Workers AI" template (it should be an opaque ~40-char string, not a JWT).`
       );
+    }
+    // Cloudflare's safety classifier rejects prompts it deems NSFW (error code
+    // 3030). Surface it as a distinct, user-actionable error instead of a raw 500.
+    if (res.status === 400 && /\bNSFW\b|"code"\s*:\s*3030/i.test(detail)) {
+      throw new NsfwPromptError();
     }
     throw new Error(`Cloudflare Workers AI error (${res.status}): ${detail.slice(0, 300)}`);
   }

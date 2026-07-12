@@ -4,6 +4,9 @@ import dbConnect from "./mongoose";
 import Membership, { Role } from "../models/Membership";
 import Organization, { IOrganization } from "../models/Organization";
 import Brand from "../models/Brand";
+import User from "../models/User";
+import Review from "../models/Review";
+import AnalyticsEvent from "../models/Analytics";
 import { enforceLimit } from "./usage";
 import { ROLE_RANK, roleAtLeast } from "./roles";
 
@@ -33,12 +36,57 @@ export async function getOrgContext(session: Session | null): Promise<OrgContext
   if (!membership) {
     membership = await Membership.findOne({ userId }).sort({ joinedAt: 1 });
   }
+  if (!membership) {
+    membership = await healMissingWorkspace(userId);
+  }
   if (!membership) return null;
 
   const org = await Organization.findById(membership.orgId);
   if (!org) return null;
 
   return { org, orgId: org._id.toString(), role: membership.role };
+}
+
+/**
+ * Accounts created before multi-tenancy (or missed by the migrate-orgs backfill)
+ * have no Organization/Membership, so every org-guarded route 403s for them.
+ * Recreate the personal workspace exactly as registration does, and adopt any
+ * legacy data still keyed only by userId. Idempotent (upserts), so concurrent
+ * requests can't create duplicates.
+ */
+async function healMissingWorkspace(userId: string) {
+  const user = await User.findById(userId);
+  if (!user) return null;
+
+  const org = await Organization.findOneAndUpdate(
+    { ownerId: user._id },
+    {
+      $setOnInsert: {
+        name: `${user.name}'s Workspace`,
+        plan: user.plan ?? "free",
+        planActivatedAt: user.planActivatedAt,
+        planExpiresAt: user.planExpiresAt,
+        stripeCustomerId: user.stripeCustomerId,
+        stripeSubscriptionId: user.stripeSubscriptionId,
+      },
+    },
+    { upsert: true, new: true }
+  );
+
+  const membership = await Membership.findOneAndUpdate(
+    { userId: user._id, orgId: org._id },
+    { $setOnInsert: { role: "owner", joinedAt: new Date() } },
+    { upsert: true, new: true }
+  );
+
+  // Review.userId is stored as a String; Brand/AnalyticsEvent use ObjectIds.
+  await Promise.all([
+    Brand.updateMany({ userId: user._id, orgId: { $exists: false } }, { $set: { orgId: org._id } }),
+    Review.updateMany({ userId: String(user._id), orgId: { $exists: false } }, { $set: { orgId: org._id } }),
+    AnalyticsEvent.updateMany({ userId: user._id, orgId: { $exists: false } }, { $set: { orgId: org._id } }),
+  ]);
+
+  return membership;
 }
 
 export type RequireRoleResult =

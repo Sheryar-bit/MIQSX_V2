@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { Users, CheckCircle2, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import "../../../auth/auth.css";
 
 interface InviteInfo {
   email: string;
@@ -56,81 +55,89 @@ export default function AcceptInvitePage() {
   const callbackUrl = `/team/accept/${token}`;
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-8 text-center">
-        <div className="flex justify-center mb-5">
-          <div className="h-12 w-12 rounded-xl bg-gradient-brand flex items-center justify-center">
-            <Users className="h-6 w-6 text-white" />
-          </div>
-        </div>
+    <div data-theme="light" style={{ minHeight: "100vh" }}>
+      <div style={{ position: "relative", background: "var(--bg)", color: "var(--ink)", fontFamily: "'General Sans', system-ui, sans-serif", minHeight: "100vh", WebkitFontSmoothing: "antialiased", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+        <div className="au-grain" aria-hidden="true" />
 
-        {loading ? (
-          <p className="text-text-muted">Loading invite…</p>
-        ) : error && !invite ? (
-          <div className="space-y-3">
-            <AlertCircle className="h-8 w-8 text-error mx-auto" />
-            <p className="text-text">{error}</p>
-            <Link href="/dashboard" className="text-primary-light hover:underline text-sm">
-              Go to dashboard
-            </Link>
+        <div style={{ position: "relative", width: "100%", maxWidth: 420, borderRadius: 20, border: "1px solid var(--line)", background: "var(--surface)", padding: "clamp(28px, 4vw, 36px)", textAlign: "center" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+            <span style={{ width: 48, height: 48, borderRadius: 14, background: "var(--sig)", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="24" height="24" fill="none" stroke="var(--onSig)" strokeWidth="1.8" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3" /><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.5a3 3 0 010 6M21 20c0-2.5-1.5-4.6-3.6-5.5" /></svg>
+            </span>
           </div>
-        ) : done ? (
-          <div className="space-y-3">
-            <CheckCircle2 className="h-10 w-10 text-success mx-auto" />
-            <h1 className="text-xl font-bold text-text">You&apos;re in!</h1>
-            <p className="text-text-muted text-sm">Redirecting you to the dashboard…</p>
-          </div>
-        ) : invite && !invite.valid ? (
-          <div className="space-y-3">
-            <AlertCircle className="h-8 w-8 text-error mx-auto" />
-            <p className="text-text">
-              This invite is {invite.status === "pending" ? "no longer valid" : invite.status}.
-            </p>
-            <Link href="/dashboard" className="text-primary-light hover:underline text-sm">
-              Go to dashboard
-            </Link>
-          </div>
-        ) : invite ? (
-          <div className="space-y-5">
-            <div>
-              <h1 className="text-xl font-bold text-text">Join a workspace</h1>
-              <p className="text-text-muted text-sm mt-2">
-                <strong className="text-text">{invite.inviterName}</strong> invited you to collaborate
-                on MIQSX as a <strong className="text-primary-light capitalize">{invite.role}</strong>.
-              </p>
+
+          {loading ? (
+            <p style={{ fontFamily: "'Newsreader', serif", fontSize: 15, color: "var(--muted)" }}>Loading invite…</p>
+          ) : error && !invite ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
+              <svg width="30" height="30" fill="none" stroke="var(--red)" strokeWidth="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 8v5M12 16h.01" /></svg>
+              <p style={{ margin: 0 }}>{error}</p>
+              <Link href="/dashboard" style={{ color: "var(--sig)", fontSize: 14, fontWeight: 600, textDecoration: "none" }}>
+                Go to dashboard
+              </Link>
             </div>
-
-            {error && (
-              <p className="text-sm text-error bg-error/10 border border-error/20 rounded-xl px-4 py-3">
-                {error}
+          ) : done ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
+              <svg width="36" height="36" fill="none" stroke="var(--sig)" strokeWidth="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M8.5 12.5l2.5 2.5 5-5" /></svg>
+              <h1 style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: 22, letterSpacing: "-0.02em", margin: 0 }}>You&apos;re in!</h1>
+              <p style={{ fontFamily: "'Newsreader', serif", fontSize: 15, color: "var(--muted)", margin: 0 }}>Redirecting you to the dashboard…</p>
+            </div>
+          ) : invite && !invite.valid ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
+              <svg width="30" height="30" fill="none" stroke="var(--red)" strokeWidth="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 8v5M12 16h.01" /></svg>
+              <p style={{ margin: 0 }}>
+                This invite is {invite.status === "pending" ? "no longer valid" : invite.status}.
               </p>
-            )}
-
-            {authStatus === "authenticated" ? (
-              <Button className="w-full" loading={accepting} onClick={accept}>
-                Accept invite
-              </Button>
-            ) : (
-              <div className="space-y-2">
-                <p className="text-text-dim text-xs">Sign in or create an account to accept.</p>
-                <div className="flex gap-2">
-                  <Link
-                    href={`/auth/login?callbackUrl=${encodeURIComponent(callbackUrl)}`}
-                    className="flex-1 h-10 rounded-xl bg-primary text-white text-sm font-medium flex items-center justify-center hover:bg-primary-hover"
-                  >
-                    Sign in
-                  </Link>
-                  <Link
-                    href={`/auth/signup?callbackUrl=${encodeURIComponent(callbackUrl)}`}
-                    className="flex-1 h-10 rounded-xl border border-border text-text text-sm font-medium flex items-center justify-center hover:bg-surface-2"
-                  >
-                    Sign up
-                  </Link>
-                </div>
+              <Link href="/dashboard" style={{ color: "var(--sig)", fontSize: 14, fontWeight: 600, textDecoration: "none" }}>
+                Go to dashboard
+              </Link>
+            </div>
+          ) : invite ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              <div>
+                <h1 style={{ fontFamily: "'General Sans'", fontWeight: 600, fontSize: 22, letterSpacing: "-0.02em", margin: 0 }}>Join a workspace</h1>
+                <p style={{ fontFamily: "'Newsreader', serif", fontSize: 15, color: "var(--muted)", margin: "8px 0 0" }}>
+                  <strong style={{ color: "var(--ink)" }}>{invite.inviterName}</strong> invited you to collaborate
+                  on MIQSX as a <strong style={{ color: "var(--sig)", textTransform: "capitalize" }}>{invite.role}</strong>.
+                </p>
               </div>
-            )}
-          </div>
-        ) : null}
+
+              {error && (
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "var(--terra)", background: "color-mix(in oklab, var(--terra) 12%, transparent)", border: "1px solid color-mix(in oklab, var(--terra) 32%, transparent)", borderRadius: 10, padding: "11px 13px" }}>
+                  {error}
+                </div>
+              )}
+
+              {authStatus === "authenticated" ? (
+                <button
+                  onClick={accept}
+                  disabled={accepting}
+                  style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: "var(--sig)", color: "var(--onSig)", fontFamily: "'General Sans'", fontWeight: 600, fontSize: 15, cursor: accepting ? "default" : "pointer", opacity: accepting ? 0.7 : 1 }}
+                >
+                  {accepting ? "Accepting…" : "Accept invite"}
+                </button>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "var(--muted)", margin: 0 }}>Sign in or create an account to accept.</p>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <Link
+                      href={`/auth/login?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+                      style={{ flex: 1, height: 42, borderRadius: 12, background: "var(--sig)", color: "var(--onSig)", fontSize: 14, fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      Sign in
+                    </Link>
+                    <Link
+                      href={`/auth/signup?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+                      style={{ flex: 1, height: 42, borderRadius: 12, border: "1px solid var(--line)", color: "var(--ink)", fontSize: 14, fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      Sign up
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

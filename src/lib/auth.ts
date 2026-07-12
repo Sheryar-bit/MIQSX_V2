@@ -33,12 +33,29 @@ export const authOptions: NextAuthOptions = {
         const email = credentials.email.toLowerCase().trim();
 
         // Dev-only convenience login — stripped out of production builds.
+        // Backed by a real DB user (find-or-create) so org-scoped features
+        // (workspaces, brands, quotas) behave exactly like production accounts;
+        // a hardcoded fake id would have no Membership and 403 every org guard.
         if (
           process.env.NODE_ENV !== "production" &&
           email === TEST_USER.email &&
           credentials.password === TEST_USER.password
         ) {
-          return { id: TEST_USER.id, email: TEST_USER.email, name: TEST_USER.name, plan: "free" };
+          await connectDB();
+          let testUser = await User.findOne({ email: TEST_USER.email });
+          if (!testUser) {
+            testUser = await User.create({
+              name: TEST_USER.name,
+              email: TEST_USER.email,
+              password: await bcrypt.hash(TEST_USER.password, 12),
+            });
+          }
+          return {
+            id: testUser._id.toString(),
+            email: testUser.email,
+            name: testUser.name,
+            plan: testUser.plan,
+          };
         }
 
         // Real users — look up in MongoDB and verify the bcrypt hash.
@@ -86,15 +103,22 @@ export const authOptions: NextAuthOptions = {
       if (trigger === "update") {
         try {
           await connectDB();
-          // Switch workspace via update({ activeOrgId }) — only if a member.
-          const requestedOrg = (session as { activeOrgId?: string } | undefined)?.activeOrgId;
-          if (requestedOrg && token.id) {
-            const m = await Membership.findOne({ userId: token.id, orgId: requestedOrg });
-            if (m) token.activeOrgId = requestedOrg;
+          const s = session as { activeOrgId?: string; name?: string } | undefined;
+          // Switch workspace.
+          if (s?.activeOrgId && token.id) {
+            const m = await Membership.findOne({ userId: token.id, orgId: s.activeOrgId });
+            if (m) token.activeOrgId = s.activeOrgId;
           }
-          // Re-sync plan from the active workspace (e.g. right after an upgrade).
+          // Re-sync name if provided (e.g. after profile save).
+          if (s?.name) token.name = s.name;
+          // Re-sync plan from the active workspace.
           const activeOrg = token.activeOrgId;
           if (activeOrg) token.plan = await orgPlan(activeOrg);
+          // Always re-read name from DB so it stays current.
+          if (token.id) {
+            const u = await User.findById(token.id).select("name");
+            if (u?.name) token.name = u.name;
+          }
         } catch {
           /* keep existing token values */
         }
@@ -103,7 +127,7 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id;
+        session.user.id = token.id ?? token.sub;
         session.user.plan = token.plan;
         session.user.activeOrgId = token.activeOrgId;
         if (token.email) session.user.email = token.email;
