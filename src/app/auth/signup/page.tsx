@@ -67,10 +67,14 @@ export default function SignupPage() {
     setError("");
     setLoading(true);
     try {
+      // Carry the pricing-page selection (?plan=pro / ?plan=agency) into signup so
+      // the register handler can start the 7-day DB trial for paid plans.
+      const planParam = new URLSearchParams(window.location.search).get("plan");
+      const plan = planParam === "pro" || planParam === "agency" ? planParam : "free";
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, plan }),
       });
       const data = await res.json();
       if (!res.ok) {

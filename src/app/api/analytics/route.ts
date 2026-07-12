@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getOrgAnalytics, trackEvent } from "@/lib/analytics";
 import { getOrgContext } from "@/lib/org-context";
 import { PLANS, currentMonth } from "@/lib/plans";
+import { effectivePlan } from "@/lib/access";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -23,13 +24,16 @@ export async function GET() {
     let usageCounts = org.usageCounts ?? {};
     if (org.usageMonth !== month) usageCounts = {};
 
-    const plan = PLANS[org.plan as keyof typeof PLANS] ?? PLANS.free;
+    // Effective plan so the usage meters/limits match what gating actually allows
+    // (a lapsed trial shows free limits, not the stale paid plan).
+    const effPlan = effectivePlan({ plan: org.plan, subscriptionStatus: org.subscriptionStatus, trialEndsAt: org.trialEndsAt });
+    const plan = PLANS[effPlan] ?? PLANS.free;
 
     return NextResponse.json({
       user: {
         name: session.user.name,
         email: session.user.email,
-        plan: org.plan,
+        plan: effPlan,
         planActivatedAt: org.planActivatedAt,
         planExpiresAt: org.planExpiresAt,
       },

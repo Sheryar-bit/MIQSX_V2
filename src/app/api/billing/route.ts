@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getOrgContext, requireRole } from "@/lib/org-context";
 import { PLANS, UserPlan } from "@/lib/plans";
 import { activatePlan } from "@/lib/activate-plan";
+import { hasActiveAccess, isTrialing, trialDaysLeft } from "@/lib/access";
 
 export const runtime = "nodejs";
 
@@ -19,10 +20,20 @@ export async function GET() {
 
   const org = ctx.org;
   const currentPlan = PLANS[org.plan as UserPlan] ?? PLANS.free;
+  const billing = {
+    plan: org.plan,
+    subscriptionStatus: org.subscriptionStatus,
+    trialEndsAt: org.trialEndsAt,
+  };
 
   return NextResponse.json({
     current: {
       plan: org.plan,
+      subscriptionStatus: org.subscriptionStatus,
+      trialEndsAt: org.trialEndsAt ?? null,
+      trialDaysLeft: trialDaysLeft(billing),
+      isTrialing: isTrialing(billing),
+      hasAccess: hasActiveAccess(billing),
       activatedAt: org.planActivatedAt,
       expiresAt: org.planExpiresAt,
     },

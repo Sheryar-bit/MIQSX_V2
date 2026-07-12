@@ -1,4 +1,45 @@
 export type UserPlan = "free" | "pro" | "agency";
+export type PaidPlan = Exclude<UserPlan, "free">;
+export type BillingInterval = "monthly" | "yearly";
+
+/**
+ * Stripe Price IDs for each paid plan × billing interval.
+ *
+ * The four values are real test-mode Price IDs, hardcoded here as defaults so the
+ * app works out of the box, but any of them can be overridden via env (e.g. when
+ * you switch to live mode) without a code change.
+ */
+export const PRICE_IDS: Record<PaidPlan, Record<BillingInterval, string>> = {
+  pro: {
+    monthly: process.env.STRIPE_PRICE_PRO_MONTHLY ?? "price_1TsKee5KJ4YStMU1JPV4mfNm",
+    yearly: process.env.STRIPE_PRICE_PRO_YEARLY ?? "price_1TsKfj5KJ4YStMU1KoiCSvjF",
+  },
+  agency: {
+    monthly: process.env.STRIPE_PRICE_AGENCY_MONTHLY ?? "price_1TsKgi5KJ4YStMU1H590hXeU",
+    yearly: process.env.STRIPE_PRICE_AGENCY_YEARLY ?? "price_1TsKhT5KJ4YStMU1wBkJF8nh",
+  },
+};
+
+/** Resolve the Stripe Price ID for a plan + interval. Throws on an unknown combo. */
+export function getPriceId(plan: string, interval: string): string {
+  const planPrices = PRICE_IDS[plan as PaidPlan];
+  if (!planPrices) throw new Error(`getPriceId: unknown or non-purchasable plan "${plan}"`);
+  const priceId = planPrices[interval as BillingInterval];
+  if (!priceId) throw new Error(`getPriceId: unknown billing interval "${interval}"`);
+  return priceId;
+}
+
+/** Reverse lookup: a Stripe Price ID → { plan, interval }, or null if unknown. */
+export function planFromPriceId(priceId: string | undefined): { plan: PaidPlan; interval: BillingInterval } | null {
+  if (!priceId) return null;
+  for (const plan of Object.keys(PRICE_IDS) as PaidPlan[]) {
+    for (const interval of Object.keys(PRICE_IDS[plan]) as BillingInterval[]) {
+      if (PRICE_IDS[plan][interval] === priceId) return { plan, interval };
+    }
+  }
+  return null;
+}
+
 
 export interface PlanDefinition {
   id: UserPlan;

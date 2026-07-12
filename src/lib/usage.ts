@@ -8,6 +8,7 @@ import {
   isWithinLimit,
   currentMonth,
 } from "./plans";
+import { effectivePlan } from "./access";
 
 export interface UsageStatus {
   allowed: boolean;
@@ -23,8 +24,14 @@ export interface UsageStatus {
  */
 export async function checkUsage(orgId: string, feature: string): Promise<UsageStatus> {
   await dbConnect();
-  const org = await Organization.findById(orgId).select("plan usageMonth usageCounts");
-  const plan = (org?.plan as UserPlan) ?? "free";
+  const org = await Organization.findById(orgId).select(
+    "plan subscriptionStatus trialEndsAt usageMonth usageCounts"
+  );
+  // Use the EFFECTIVE plan so a lapsed trial (or canceled/past_due sub) falls
+  // back to free limits automatically, even though org.plan still reads 'pro'.
+  const plan: UserPlan = org
+    ? effectivePlan({ plan: org.plan, subscriptionStatus: org.subscriptionStatus, trialEndsAt: org.trialEndsAt })
+    : "free";
 
   const month = currentMonth();
   const counts: Record<string, number> =

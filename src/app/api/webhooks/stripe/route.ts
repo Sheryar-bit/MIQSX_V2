@@ -51,8 +51,10 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const s = event.data.object as Stripe.Checkout.Session;
+        // client_reference_id (set to the orgId at checkout) is the primary link;
+        // fall back to metadata / customer lookup.
         const orgId = await resolveOrgId(
-          s.metadata?.orgId,
+          s.metadata?.orgId ?? s.client_reference_id ?? undefined,
           typeof s.customer === "string" ? s.customer : s.customer?.id
         );
         const plan = (s.metadata?.plan as UserPlan) ?? null;
@@ -67,8 +69,12 @@ export async function POST(req: NextRequest) {
           expiresAt = periodEnd(sub);
         }
 
+        // Trial converted → the workspace is now a paying customer. Flip
+        // 'trialing' → 'active' and clear the DB trial window.
         await activatePlan(orgId, plan, {
           expiresAt,
+          subscriptionStatus: "active",
+          trialEndsAt: null,
           stripeCustomerId: typeof s.customer === "string" ? s.customer : s.customer?.id,
           stripeSubscriptionId: typeof s.subscription === "string" ? s.subscription : s.subscription?.id ?? null,
         });
@@ -85,15 +91,25 @@ export async function POST(req: NextRequest) {
         );
         if (!orgId || !plan) break;
 
-        // Active/trialing → keep the plan; anything else (past_due, unpaid,
-        // canceled) → drop to free.
         if (sub.status === "active" || sub.status === "trialing") {
+          // Healthy sub → keep the plan active.
           await activatePlan(orgId, plan, {
             expiresAt: periodEnd(sub),
+            subscriptionStatus: "active",
+            trialEndsAt: null,
+            stripeSubscriptionId: sub.id,
+          });
+        } else if (sub.status === "past_due" || sub.status === "unpaid") {
+          // Payment failing — mark past_due but keep the plan while Stripe retries.
+          // effectivePlan() still gates features off until it recovers.
+          await activatePlan(orgId, plan, {
+            expiresAt: periodEnd(sub),
+            subscriptionStatus: "past_due",
             stripeSubscriptionId: sub.id,
           });
         } else {
-          await activatePlan(orgId, "free", { stripeSubscriptionId: null });
+          // canceled / incomplete_expired / paused → drop to free.
+          await activatePlan(orgId, "free", { subscriptionStatus: "canceled", stripeSubscriptionId: null });
         }
         break;
       }
@@ -104,12 +120,15 @@ export async function POST(req: NextRequest) {
           sub.metadata?.orgId,
           typeof sub.customer === "string" ? sub.customer : sub.customer?.id
         );
-        if (orgId) await activatePlan(orgId, "free", { stripeSubscriptionId: null });
+        if (orgId) {
+          await activatePlan(orgId, "free", { subscriptionStatus: "canceled", stripeSubscriptionId: null });
+        }
         break;
       }
 
       default:
-        // Ignore other events.
+        // Not handled — log so we can see what Stripe is sending.
+        console.log(`[stripe webhook] unhandled event type: ${event.type}`);
         break;
     }
   } catch (err) {

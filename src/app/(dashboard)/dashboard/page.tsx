@@ -6,6 +6,7 @@ import Brand from "@/models/Brand";
 import { getOrgContext } from "@/lib/org-context";
 import Link from "next/link";
 import { BrandsSection } from "./BrandsSection";
+import { TrialBanner } from "@/components/layout/TrialBanner";
 import type { Brand as BrandType } from "@/types/brand";
 
 async function getBrands(orgId: string): Promise<BrandType[]> {
@@ -32,6 +33,9 @@ export default async function DashboardPage() {
 
   return (
     <div style={{ padding: "clamp(24px, 3.5vw, 44px) clamp(20px, 4vw, 52px) 80px" }}>
+
+      {/* Trial → paid conversion prompt (only renders during a trial / past_due) */}
+      <TrialBanner />
 
       {/* topbar */}
       <div className="ds-in" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, flexWrap: "wrap", marginBottom: "clamp(30px, 5vh, 50px)" }}>

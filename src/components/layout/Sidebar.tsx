@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
+import { useWorkspaces } from "@/lib/hooks";
 
 const brandItems = [
   { href: "/dashboard", label: "Dashboard", exact: true, icon: <svg fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> },
@@ -79,7 +80,12 @@ const MoonIcon = () => (
 export function Sidebar() {
   const { data: session } = useSession();
   const pathname = usePathname();
-  const plan = (session?.user?.plan as string) ?? "free";
+  // Read the plan LIVE from the active workspace (via SWR), not the JWT — so an
+  // upgrade/downgrade shows immediately without needing a re-login. Falls back to
+  // the session's plan until the workspace list loads.
+  const { workspaces, activeOrgId } = useWorkspaces();
+  const activeWs = workspaces.find((w) => w.orgId === (activeOrgId ?? session?.user?.activeOrgId));
+  const plan = activeWs?.plan ?? (session?.user?.plan as string) ?? "free";
   const meta = PLAN_META[plan] ?? PLAN_META.free;
   const [dark, setDark] = useState(false);
   const [mobOpen, setMobOpen] = useState(false);

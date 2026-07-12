@@ -3,8 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { requireRole } from "@/lib/org-context";
 import Organization from "@/models/Organization";
-import { getStripe, planToPriceId } from "@/lib/stripe";
-import { UserPlan } from "@/lib/plans";
+import { getStripe } from "@/lib/stripe";
+import { getPriceId, UserPlan, BillingInterval } from "@/lib/plans";
 
 export const runtime = "nodejs";
 
@@ -20,15 +20,23 @@ export async function POST(req: NextRequest) {
   if (!guard.ok) return guard.response;
 
   try {
-    const { plan } = (await req.json()) as { plan: UserPlan };
+    const { plan, interval = "monthly" } = (await req.json()) as {
+      plan: UserPlan;
+      interval?: BillingInterval;
+    };
     if (plan !== "pro" && plan !== "agency") {
       return NextResponse.json({ error: "Only pro and agency are purchasable." }, { status: 400 });
     }
+    if (interval !== "monthly" && interval !== "yearly") {
+      return NextResponse.json({ error: "interval must be 'monthly' or 'yearly'." }, { status: 400 });
+    }
 
-    const priceId = planToPriceId(plan);
-    if (!priceId) {
+    let priceId: string;
+    try {
+      priceId = getPriceId(plan, interval);
+    } catch {
       return NextResponse.json(
-        { error: `No Stripe price configured for the ${plan} plan. Set STRIPE_PRICE_${plan.toUpperCase()}.` },
+        { error: `No Stripe price configured for ${plan}/${interval}.` },
         { status: 500 }
       );
     }
@@ -56,10 +64,16 @@ export async function POST(req: NextRequest) {
     const checkout = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
+      // NOTE: no `trial_period_days` — the 7-day trial already ran in our DB
+      // (no card). Adding a Stripe trial here would double it and delay billing.
       line_items: [{ price: priceId, quantity: 1 }],
-      metadata: { orgId: org._id.toString(), plan },
-      subscription_data: { metadata: { orgId: org._id.toString(), plan } },
-      success_url: `${appUrl}/billing?upgraded=1`,
+      client_reference_id: org._id.toString(),
+      metadata: { orgId: org._id.toString(), plan, interval },
+      subscription_data: { metadata: { orgId: org._id.toString(), plan, interval } },
+      // session_id lets the return page confirm + activate immediately (a
+      // webhook-independent fallback, handy for local/demo). Stripe substitutes
+      // the real id into the {CHECKOUT_SESSION_ID} template.
+      success_url: `${appUrl}/billing?upgraded=1&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/billing?cancelled=1`,
       allow_promotion_codes: true,
     });

@@ -12,7 +12,14 @@ interface PlanCard {
 }
 
 interface BillingData {
-  current: { plan: string; activatedAt?: string; expiresAt?: string };
+  current: {
+    plan: string;
+    subscriptionStatus?: string;
+    isTrialing?: boolean;
+    trialDaysLeft?: number;
+    activatedAt?: string;
+    expiresAt?: string;
+  };
   plans: PlanCard[];
 }
 
@@ -74,9 +81,28 @@ export default function BillingPage() {
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     if (p.get("upgraded")) {
-      setNotice("🎉 Upgrade complete! Your new plan is active.");
-      update?.();
-      load();
+      const sessionId = p.get("session_id");
+      setNotice("Finalizing your upgrade…");
+      (async () => {
+        // Activate immediately on return (webhook-independent). Safe: the server
+        // re-verifies the session with Stripe before flipping the plan.
+        if (sessionId) {
+          try {
+            await fetch("/api/billing/confirm", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ sessionId }),
+            });
+          } catch {
+            /* webhook will still activate it shortly */
+          }
+        }
+        setNotice("🎉 Upgrade complete! Your new plan is active.");
+        update?.();
+        load();
+        // Drop the query params so a refresh doesn't re-run confirmation.
+        window.history.replaceState({}, "", "/billing");
+      })();
     } else if (p.get("cancelled")) {
       setNotice("Checkout cancelled — no changes made.");
     }
@@ -91,7 +117,7 @@ export default function BillingPage() {
         const res = await fetch("/api/billing/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ plan }),
+          body: JSON.stringify({ plan, interval: cycle }),
         });
         const d = await res.json();
         if (res.ok && d.url) { window.location.href = d.url; return; }
@@ -246,6 +272,11 @@ export default function BillingPage() {
         <div className="bl-plans" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
           {data.plans.map((p, idx) => {
             const s = PLAN_STYLE[p.id] ?? PLAN_STYLE.free;
+            // While on a trial, the "current" plan should still be convertible to
+            // paid (that's the whole point of the trial) — only a truly-active
+            // paid plan is locked as "Current plan".
+            const canConvertTrial = !!data.current.isTrialing && p.id === data.current.plan;
+            const locked = p.isCurrent && !canConvertTrial;
             return (
               <div
                 key={p.id}
@@ -272,11 +303,11 @@ export default function BillingPage() {
                   ))}
                 </div>
                 <button
-                  onClick={() => !p.isCurrent && choosePlan(p.id)}
-                  disabled={p.isCurrent || busy === p.id}
-                  style={{ width: "100%", padding: "12px", borderRadius: 11, border: s.btnBorder, background: p.isCurrent ? "var(--surf2)" : s.btnBg, color: p.isCurrent ? "var(--muted)" : s.btnFg, fontFamily: "'General Sans'", fontWeight: 600, fontSize: 14, cursor: p.isCurrent || busy === p.id ? "default" : "pointer", opacity: busy === p.id ? 0.5 : 1 }}
+                  onClick={() => !locked && choosePlan(p.id)}
+                  disabled={locked || busy === p.id}
+                  style={{ width: "100%", padding: "12px", borderRadius: 11, border: s.btnBorder, background: locked ? "var(--surf2)" : s.btnBg, color: locked ? "var(--muted)" : s.btnFg, fontFamily: "'General Sans'", fontWeight: 600, fontSize: 14, cursor: locked || busy === p.id ? "default" : "pointer", opacity: busy === p.id ? 0.5 : 1 }}
                 >
-                  {p.isCurrent ? "Current plan" : busy === p.id ? "…" : `Switch to ${p.name}`}
+                  {locked ? "Current plan" : busy === p.id ? "…" : canConvertTrial ? `Keep ${p.name} — end trial` : `Switch to ${p.name}`}
                 </button>
               </div>
             );

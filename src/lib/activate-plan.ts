@@ -1,5 +1,5 @@
 import dbConnect from "./mongoose";
-import Organization from "../models/Organization";
+import Organization, { SubscriptionStatus } from "../models/Organization";
 import { UserPlan } from "./plans";
 
 export interface ActivatePlanResult {
@@ -13,6 +13,8 @@ export interface ActivatePlanOptions {
   expiresAt?: Date | null;     // explicit period end (e.g. from a Stripe subscription)
   stripeCustomerId?: string;
   stripeSubscriptionId?: string | null;
+  subscriptionStatus?: SubscriptionStatus;  // 'active' | 'canceled' | 'past_due' ...
+  trialEndsAt?: Date | null;                // clear/set the DB trial window
 }
 
 /**
@@ -47,6 +49,15 @@ export async function activatePlan(
   };
   if (opts.stripeCustomerId !== undefined) set.stripeCustomerId = opts.stripeCustomerId;
   if (opts.stripeSubscriptionId !== undefined) set.stripeSubscriptionId = opts.stripeSubscriptionId;
+  if (opts.subscriptionStatus !== undefined) set.subscriptionStatus = opts.subscriptionStatus;
+  if (opts.trialEndsAt !== undefined) set.trialEndsAt = opts.trialEndsAt;
+  // Keep subscriptionStatus coherent with the plan when the caller didn't set it:
+  // free → 'free' (no live sub); paid → 'active' (e.g. the dev plan-switch path).
+  // The Stripe webhook/confirm always pass an explicit status, so this only fills
+  // the gap for direct activatePlan() calls.
+  if (opts.subscriptionStatus === undefined) {
+    set.subscriptionStatus = plan === "free" ? "free" : "active";
+  }
 
   const org = await Organization.findByIdAndUpdate(orgId, set, { new: true });
   if (!org) throw new Error(`activatePlan: org ${orgId} not found`);

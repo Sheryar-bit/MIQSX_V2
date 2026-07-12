@@ -5,6 +5,7 @@ import { connectDB } from "@/lib/mongoose";
 import User from "@/models/User";
 import Membership from "@/models/Membership";
 import Organization from "@/models/Organization";
+import { effectivePlan } from "@/lib/access";
 
 // Dev-only test account — never available in production builds.
 const TEST_USER = {
@@ -79,10 +80,11 @@ export const authOptions: NextAuthOptions = {
         token.plan = "free"; // overwritten below from the active workspace
       }
 
-      // Helper: load a workspace's plan.
+      // Helper: load a workspace's EFFECTIVE plan (so a lapsed trial reads 'free').
       const orgPlan = async (orgId: string) => {
-        const org = await Organization.findById(orgId).select("plan");
-        return org?.plan ?? "free";
+        const org = await Organization.findById(orgId).select("plan subscriptionStatus trialEndsAt");
+        if (!org) return "free";
+        return effectivePlan({ plan: org.plan, subscriptionStatus: org.subscriptionStatus, trialEndsAt: org.trialEndsAt });
       };
 
       // Seed the active workspace + its plan (oldest membership = personal workspace).

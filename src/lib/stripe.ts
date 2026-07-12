@@ -1,5 +1,6 @@
 import Stripe from "stripe";
-import type { UserPlan } from "./plans";
+import type { UserPlan, BillingInterval } from "./plans";
+import { getPriceId, planFromPriceId } from "./plans";
 
 let _stripe: Stripe | null = null;
 
@@ -11,15 +12,19 @@ export function getStripe(): Stripe {
   return _stripe;
 }
 
-/** Paid plan → Stripe Price ID (set in .env from the Stripe dashboard). */
-export function planToPriceId(plan: Exclude<UserPlan, "free">): string | undefined {
-  return plan === "pro" ? process.env.STRIPE_PRICE_PRO : process.env.STRIPE_PRICE_AGENCY;
+/** Paid plan (+ interval) → Stripe Price ID. Defaults to the monthly price. */
+export function planToPriceId(
+  plan: Exclude<UserPlan, "free">,
+  interval: BillingInterval = "monthly"
+): string | undefined {
+  try {
+    return getPriceId(plan, interval);
+  } catch {
+    return undefined;
+  }
 }
 
-/** Reverse: a Stripe Price ID → our plan key. */
+/** Reverse: a Stripe Price ID → our plan key (any interval). */
 export function priceIdToPlan(priceId: string | undefined): UserPlan | null {
-  if (!priceId) return null;
-  if (priceId === process.env.STRIPE_PRICE_PRO) return "pro";
-  if (priceId === process.env.STRIPE_PRICE_AGENCY) return "agency";
-  return null;
+  return planFromPriceId(priceId)?.plan ?? null;
 }
