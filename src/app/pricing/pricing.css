@@ -114,7 +114,7 @@
 }
 
 .pr-price {
-  display: flex; align-items: baseline; gap: 2px;
+  display: flex; align-items: baseline; gap: 6px;
   margin-bottom: 4px;
 }
 .pr-currency { font-size: 22px; font-weight: 600; color: var(--ink); opacity: .7; align-self: flex-start; margin-top: 8px; }

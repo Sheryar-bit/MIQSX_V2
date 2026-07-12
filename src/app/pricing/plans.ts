@@ -28,7 +28,7 @@ export const PLANS: PricingPlan[] = [
   },
   {
     name: 'Pro',
-    price: { monthly: 29, yearly: 19 },
+    price: { monthly: 2999, yearly: 1999 },
     blurb: 'For freelancers and growing brands.',
     cta: 'Start Pro free',
     href: '/auth/signup?plan=pro',
@@ -47,7 +47,7 @@ export const PLANS: PricingPlan[] = [
   },
   {
     name: 'Agency',
-    price: { monthly: 79, yearly: 55 },
+    price: { monthly: 7999, yearly: 4999 },
     blurb: 'For studios managing multiple clients.',
     cta: 'Start Agency free',
     href: '/auth/signup?plan=agency',
