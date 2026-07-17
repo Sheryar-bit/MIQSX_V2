@@ -5,12 +5,11 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Building2, User, Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { useWorkspaces, type Workspace } from "@/lib/hooks";
-import { cn } from "@/lib/utils";
 
-const PLAN_STYLES: Record<string, string> = {
-  free: "text-text-dim",
-  pro: "text-primary-light",
-  agency: "text-accent",
+const PLAN_COLOR: Record<string, string> = {
+  free: "var(--muted)",
+  pro: "var(--peri)",
+  agency: "var(--terra)",
 };
 
 function WorkspaceRow({
@@ -25,30 +24,31 @@ function WorkspaceRow({
   return (
     <button
       onClick={onSelect}
-      className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-2 text-left transition-colors"
+      className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors"
+      style={{ background: "none", border: "none", cursor: "pointer" }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surf2)")}
+      onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
     >
       <div
-        className={cn(
-          "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg",
-          ws.isPersonal ? "bg-surface-2" : "bg-primary/15"
-        )}
+        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg"
+        style={{ background: ws.isPersonal ? "var(--surf2)" : "color-mix(in oklab, var(--sig) 15%, transparent)" }}
       >
         {ws.isPersonal ? (
-          <User className="h-4 w-4 text-text-muted" />
+          <User className="h-4 w-4" style={{ color: "var(--muted)" }} />
         ) : (
-          <Building2 className="h-4 w-4 text-primary-light" />
+          <Building2 className="h-4 w-4" style={{ color: "var(--sig)" }} />
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm text-text">{ws.name}</p>
-        <p className="text-[11px] text-text-dim">
+        <p className="truncate text-sm" style={{ color: "var(--ink)" }}>{ws.name}</p>
+        <p className="text-[11px]" style={{ color: "var(--muted)" }}>
           {ws.isPersonal ? "Personal" : `Team · ${ws.memberCount} members`}
-          <span className={cn("ml-1.5 capitalize", PLAN_STYLES[ws.plan] ?? "text-text-dim")}>
+          <span className="ml-1.5 capitalize" style={{ color: PLAN_COLOR[ws.plan] ?? "var(--muted)" }}>
             · {ws.plan}
           </span>
         </p>
       </div>
-      {active && <Check className="h-4 w-4 flex-shrink-0 text-primary-light" />}
+      {active && <Check className="h-4 w-4 flex-shrink-0" style={{ color: "var(--sig)" }} />}
     </button>
   );
 }
@@ -91,38 +91,42 @@ export function OrgSwitcher() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2 hover:border-primary/40 transition-colors min-w-[200px]"
+        className="flex items-center gap-2.5 rounded-xl px-3 py-2 transition-colors min-w-[200px]"
+        style={{ border: "1px solid var(--line)", background: "var(--surface)", cursor: "pointer" }}
+        onMouseEnter={(e) => (e.currentTarget.style.borderColor = "color-mix(in oklab, var(--sig) 40%, var(--line))")}
+        onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--line)")}
       >
         <div
-          className={cn(
-            "flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg",
-            active?.isPersonal ? "bg-surface-2" : "bg-primary/15"
-          )}
+          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
+          style={{ background: active?.isPersonal ? "var(--surf2)" : "color-mix(in oklab, var(--sig) 15%, transparent)" }}
         >
           {switching ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-text-muted" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: "var(--muted)" }} />
           ) : active?.isPersonal ? (
-            <User className="h-3.5 w-3.5 text-text-muted" />
+            <User className="h-3.5 w-3.5" style={{ color: "var(--muted)" }} />
           ) : (
-            <Building2 className="h-3.5 w-3.5 text-primary-light" />
+            <Building2 className="h-3.5 w-3.5" style={{ color: "var(--sig)" }} />
           )}
         </div>
         <div className="min-w-0 flex-1 text-left">
-          <p className="truncate text-sm font-medium text-text leading-tight">
+          <p className="truncate text-sm font-medium leading-tight" style={{ color: "var(--ink)" }}>
             {active?.name ?? "Workspace"}
           </p>
-          <p className="text-[11px] text-text-dim capitalize leading-tight">
+          <p className="text-[11px] capitalize leading-tight" style={{ color: "var(--muted)" }}>
             {active ? `${active.role} · ${active.plan}` : ""}
           </p>
         </div>
-        <ChevronsUpDown className="h-4 w-4 flex-shrink-0 text-text-dim" />
+        <ChevronsUpDown className="h-4 w-4 flex-shrink-0" style={{ color: "var(--muted)" }} />
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-72 rounded-xl border border-border bg-surface p-2 shadow-xl">
+        <div
+          className="absolute right-0 z-50 mt-2 w-72 rounded-xl p-2"
+          style={{ border: "1px solid var(--line)", background: "var(--surface)", boxShadow: "var(--shadow-sm, 0 20px 44px -28px rgba(0,0,0,.4))" }}
+        >
           {personal.length > 0 && (
             <>
-              <p className="px-3 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-widest text-text-dim">
+              <p className="px-3 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>
                 Personal
               </p>
               {personal.map((ws) => (
@@ -132,7 +136,7 @@ export function OrgSwitcher() {
           )}
           {teams.length > 0 && (
             <>
-              <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest text-text-dim">
+              <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>
                 Teams
               </p>
               {teams.map((ws) => (

@@ -12,7 +12,10 @@ import type { Brand as BrandType } from "@/types/brand";
 async function getBrands(orgId: string): Promise<BrandType[]> {
   try {
     await connectDB();
-    return Brand.find({ orgId }).sort({ updatedAt: -1 }).lean() as unknown as BrandType[];
+    const brands = await Brand.find({ orgId }).sort({ updatedAt: -1 }).lean();
+    // lean() still leaves ObjectId/Date instances on the docs, which RSCs can't
+    // pass to a client component — round-trip through JSON to get plain values.
+    return JSON.parse(JSON.stringify(brands));
   } catch {
     return [];
   }

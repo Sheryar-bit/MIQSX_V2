@@ -56,28 +56,31 @@ export function InviteNotifications() {
       {invitations.map((inv) => (
         <div
           key={inv.token}
-          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl px-4 py-3"
+          style={{ border: "1px solid color-mix(in oklab, var(--sig) 30%, var(--line))", background: "color-mix(in oklab, var(--sig) 10%, transparent)" }}
         >
-          <div className="flex items-center gap-2.5 text-sm text-text">
-            <Mail className="w-4 h-4 text-primary-light flex-shrink-0" />
+          <div className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ink)" }}>
+            <Mail className="w-4 h-4 flex-shrink-0" style={{ color: "var(--sig)" }} />
             <span>
               <strong>{inv.inviterName}</strong> invited you to join{" "}
               <strong>{inv.workspaceName}</strong> as{" "}
-              <span className="capitalize text-primary-light">{inv.role}</span>.
+              <span className="capitalize" style={{ color: "var(--sig)" }}>{inv.role}</span>.
             </span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => accept(inv)}
               disabled={busy === inv.token}
-              className="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-hover text-white px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50"
+              style={{ background: "var(--sig)", color: "var(--onSig)", border: "none", cursor: "pointer" }}
             >
               <Check className="w-3.5 h-3.5" /> Accept
             </button>
             <button
               onClick={() => decline(inv)}
               disabled={busy === inv.token}
-              className="inline-flex items-center gap-1.5 border border-border text-text-muted hover:text-text px-3 py-1.5 rounded-lg text-xs disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs disabled:opacity-50"
+              style={{ border: "1px solid var(--line)", color: "var(--muted)", background: "none", cursor: "pointer" }}
             >
               <X className="w-3.5 h-3.5" /> Decline
             </button>

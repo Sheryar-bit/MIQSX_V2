@@ -1,4 +1,16 @@
+import Image from 'next/image';
 import { SP } from './Sparkle';
+import p1 from '../../../posters/p1.png';
+import p2 from '../../../posters/p2.png';
+import p3 from '../../../posters/p3.png';
+import p4 from '../../../posters/p4.png';
+import p5 from '../../../posters/p5.png';
+import p6 from '../../../posters/p6.png';
+import p7 from '../../../posters/p7.png';
+import p8 from '../../../posters/p8.png';
+import p9 from '../../../posters/p9.png';
+
+const posters = [p1, p2, p3, p4, p5, p6, p7, p8, p9];
 
 export default function GalleryPreviewSection() {
   return (
@@ -51,6 +63,11 @@ export default function GalleryPreviewSection() {
                 <span style={{ fontSize: '11px', letterSpacing: '.14em', textTransform: 'uppercase', opacity: .7 }}>Story · 9:16</span>
                 <div style={{ flex: 1, borderRadius: '13px', background: 'linear-gradient(160deg, var(--peri), var(--terra))', position: 'relative', overflow: 'hidden' }}><span style={{ position: 'absolute', bottom: '14px', left: '14px', right: '14px', color: '#fff', fontFamily: "'Schibsted Grotesk', sans-serif", fontSize: '22px', fontWeight: 600, lineHeight: 1.1 }}>Monsoon edit ☔</span></div>
               </div>
+              {posters.map((poster, i) => (
+                <div key={i} data-tilt style={{ position: 'relative', flex: '0 0 auto', width: '290px', height: '366px', borderRadius: '20px', overflow: 'hidden', background: 'var(--card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)', transition: 'transform .3s cubic-bezier(.2,.7,.2,1)', willChange: 'transform' }}>
+                  <Image src={poster} alt={`Poster ${i + 1}`} fill sizes="290px" quality={100} style={{ objectFit: 'cover', objectPosition: i < 2 ? 'center' : 'left top' }} />
+                </div>
+              ))}
             </div>
           ))}
         </div>

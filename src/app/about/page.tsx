@@ -72,6 +72,7 @@ export default function AboutPage() {
         {/* OPENING HEADER */}
         <header style={{ position: 'relative', zIndex: 10, padding: 'clamp(70px,15vh,170px) clamp(20px,5vw,60px) clamp(50px,9vh,110px)', textAlign: 'center', overflow: 'hidden' }}>
           <div aria-hidden="true" style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%,-50%)', width: '70vw', height: '70vw', maxWidth: 720, maxHeight: 720, borderRadius: '50%', background: 'radial-gradient(circle at 38% 38%, var(--sig), transparent 56%), radial-gradient(circle at 66% 64%, var(--terra), transparent 56%)', opacity: .15, filter: 'blur(64px)', animation: 'ab-blob 24s ease-in-out infinite', pointerEvents: 'none' }}></div>
+          <div aria-hidden="true" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 'clamp(120px, 24vh, 260px)', background: 'linear-gradient(to bottom, transparent, var(--bg) 80%)', pointerEvents: 'none' }}></div>
           <div data-reveal style={{ position: 'relative', maxWidth: 940, margin: '0 auto' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, fontFamily: "'JetBrains Mono', monospace", fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--terra)', marginBottom: 28 }}>
               <span style={{ width: 24, height: 1, background: 'var(--terra)' }}></span>Our story<span style={{ width: 24, height: 1, background: 'var(--terra)' }}></span>
