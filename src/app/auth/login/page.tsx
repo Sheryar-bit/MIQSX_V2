@@ -119,7 +119,7 @@ export default function LoginPage() {
                   Log in to pick up where your brand left off.
                 </p>
 
-                {/* social buttons */}
+                {/* social buttons 
                 <div data-reveal="" style={{ display: "flex", flexDirection: "column", gap: 11 }}>
                   <button className="au-social" type="button">
                     <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
@@ -138,9 +138,11 @@ export default function LoginPage() {
                   </button>
                 </div>
 
+                */}
+
                 <div data-reveal="" style={{ display: "flex", alignItems: "center", gap: 14, margin: "22px 0" }}>
                   <span style={{ flex: 1, height: 1, background: "var(--line)" }} />
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--muted)" }}>or with email</span>
+                 {/* <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--muted)" }}>or with email</span>*/}
                   <span style={{ flex: 1, height: 1, background: "var(--line)" }} />
                 </div>
 
