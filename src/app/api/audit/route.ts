@@ -88,7 +88,8 @@ Return ONLY valid JSON in this exact format:
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "AI service unavailable";
-      return NextResponse.json({ error: `AI service error: ${msg}` }, { status: 503 });
+      return NextResponse.json({ error: `AI service error` }, { status: 503 });
+      
     }
 
     const raw = completion.choices[0].message.content || "{}";
