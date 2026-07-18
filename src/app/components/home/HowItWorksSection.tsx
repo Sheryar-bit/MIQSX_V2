@@ -6,7 +6,7 @@ export default function HowItWorksSection() {
       <div style={{ maxWidth: '760px', marginBottom: 'clamp(40px, 6vh, 66px)' }}>
         <div data-reveal style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontFamily: "'Newsreader', serif", fontStyle: 'italic', fontSize: '19px', color: 'var(--terra)', marginBottom: '14px' }}><svg width="14" height="14" viewBox="0 0 40 40" fill="var(--terra)"><SP /></svg> How it works</div>
         <h2 data-reveal data-reveal-delay="60" style={{ fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: 'clamp(31px, 4.8vw, 58px)', lineHeight: 1.02, letterSpacing: '-0.03em', margin: 0 }}>A loop, not a launch.</h2>
-        <p data-reveal data-reveal-delay="120" style={{ fontFamily: "'Newsreader', serif", fontSize: 'clamp(17px, 1.9vw, 20px)', lineHeight: 1.55, color: 'var(--dim)', margin: '18px 0 0', maxWidth: '54ch' }}>Your brand gets built, pressure-tested, signed off, and a little smarter — every single time you use it.</p>
+        <p data-reveal data-reveal-delay="120" style={{ fontFamily: "'Newsreader', serif", fontSize: 'clamp(17px, 1.9vw, 20px)', lineHeight: 1.55, color: 'var(--dim)', margin: '18px 0 0', maxWidth: '54ch' }}>Your brand gets built, pressure-tested, signed off, and a little smarter every single time you use it.</p>
       </div>
       <div className="mqsx-loop">
         <div data-reveal className="step step-card" style={{ transform: 'rotate(-1.2deg)' }}>
@@ -15,7 +15,7 @@ export default function HowItWorksSection() {
             <span style={{ fontSize: '11px', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--dim)' }}>Day one</span>
           </div>
           <div style={{ fontFamily: "'Schibsted Grotesk', sans-serif", fontSize: '22px', fontWeight: 600, letterSpacing: '-0.02em', marginTop: '6px' }}>Create</div>
-          <p style={{ fontSize: '14px', lineHeight: 1.55, color: 'var(--dim)', margin: 0 }}>An AI strategist interviews you and builds your Brand DNA — voice, palette, audience.</p>
+          <p style={{ fontSize: '14px', lineHeight: 1.55, color: 'var(--dim)', margin: 0 }}>An AI strategist interviews you and builds your Brand DNA voice, palette, audience.</p>
           <span style={{ marginTop: 'auto', alignSelf: 'flex-start', fontSize: '12px', padding: '5px 11px', borderRadius: '999px', background: 'var(--terra-soft)', color: 'var(--terra)' }}>Brand DNA ✦</span>
         </div>
         <div className="mqsx-arrowh" aria-hidden="true"><svg width="40" height="34" viewBox="0 0 40 34" fill="none" stroke="var(--terra)" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9 C 16 3, 27 7, 34 22"/><path d="M26 21 L35 24 L34 14"/></svg></div>
@@ -49,14 +49,14 @@ export default function HowItWorksSection() {
             <span style={{ fontSize: '11px', letterSpacing: '.12em', textTransform: 'uppercase', opacity: .7 }}>↻  and again</span>
           </div>
           <div style={{ position: 'relative', fontFamily: "'Schibsted Grotesk', sans-serif", fontSize: '22px', fontWeight: 600, letterSpacing: '-0.02em', marginTop: '6px' }}>Learn</div>
-          <p style={{ position: 'relative', fontSize: '14px', lineHeight: 1.55, opacity: .85, margin: 0 }}>Every yes and no trains the brand, so off-brand suggestions fade away — and the loop begins again.</p>
+          <p style={{ position: 'relative', fontSize: '14px', lineHeight: 1.55, opacity: .85, margin: 0 }}>Every yes and no trains the brand, so off-brand suggestions fade away and the loop begins again.</p>
           <span style={{ position: 'relative', marginTop: 'auto', alignSelf: 'flex-start', fontSize: '12px', padding: '5px 11px', borderRadius: '999px', background: 'rgba(255,255,255,0.14)' }}>Smarter each time</span>
         </div>
       </div>
       <div data-reveal style={{ display: 'flex', justifyContent: 'center', marginTop: '26px' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '9px', fontFamily: "'Newsreader', serif", fontStyle: 'italic', fontSize: '17px', color: 'var(--dim)', padding: '9px 18px', borderRadius: '999px', border: '1px dashed var(--border)' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--terra)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v4h4"/></svg>
-          The loop never really stops — that&apos;s the point.
+          The loop never really stops that&apos;s the point.
         </span>
       </div>
     </section>

@@ -1,8 +1,8 @@
-/* ============================================================
+/* 
    MIQSX — Home / Landing page styles
    Fonts: Schibsted Grotesk, Newsreader, Instrument Serif
    Warm cream / emerald token system (light + dark), dotted paper bg.
-   ============================================================ */
+    */
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -75,6 +75,10 @@ body { margin: 0; }
 .mqsx-track { animation: mqsx-marquee 40s linear infinite; }
 .mqsx-marquee:hover .mqsx-track { animation-play-state: paused; }
 .mqsx-spin { animation: mqsx-spin 22s linear infinite; }
+
+/* Poster card image: subtle Ken Burns zoom on hover, layered on top of the data-tilt card tilt */
+.mqsx-poster img { transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+.mqsx-poster:hover img { transform: scale(1.08); }
 
 /* Hero classes */
 .h-marq-track { animation: h-marq 26s linear infinite; }
