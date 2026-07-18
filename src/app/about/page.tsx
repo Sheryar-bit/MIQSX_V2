@@ -179,8 +179,8 @@ export default function AboutPage() {
        {[
          { initials: 'QA', bg: 'var(--leaf)', color: '#fff', name: 'Qirrat Azam', role: 'Research & Go-to-market', obsession: 'talking to every freelancer in Karachi.' },
   { initials: 'MF', bg: 'var(--terra)', color: '#fff', name: 'Mahnoor Fatima', role: 'Product & Brand DNA / Design & Frontend', obsession: 'getting the Guardian score to feel fair, and the exact warmth of our cream.' },
-  { initials: 'IM', bg: 'var(--sig)', color: 'var(--onSig)', name: 'Iraj Mahmood', role: 'AI & Architecture', obsession: 'Making ai feel smooth.' },
-  { initials: 'MS', bg: 'var(--sig)', color: 'var(--onSig)', name: 'Muhammad Shahyar', role: 'AI & Learning Loop', obsession: 'teaching it good Roman Urdu.' },
+  { initials: 'IM', bg: 'var(--sig)', color: 'var(--onSig)', name: 'Iraj Mahmood', role: 'AI & Architecture', obsession: 'Making AI feel smooth.' },
+  { initials: 'MS', bg: 'var(--sig)', color: 'var(--onSig)', name: 'Muhammad Sheryar', role: 'AI & System Design', obsession: 'Making the Engine smooth and accurate.' },
 
 ].map((m, i) => (
                 <div key={i} className="ab-team-row" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 18, alignItems: 'center', padding: '20px 14px', borderBottom: '1px solid var(--line)', borderRadius: 10, transition: 'background .3s ease', margin: '0 -14px' }}>

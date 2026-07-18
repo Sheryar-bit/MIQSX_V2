@@ -142,7 +142,7 @@ export default function SignupPage() {
                   One Brand DNA that keeps every asset on-brand — set it up in minutes.
                 </p>
 
-                {/* social buttons */}
+                {/* social buttons 
                 <div data-reveal="" style={{ display: "flex", flexDirection: "column", gap: 11 }}>
                   <button className="au-social" type="button">
                     <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
@@ -166,6 +166,7 @@ export default function SignupPage() {
                   <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--muted)" }}>or with email</span>
                   <span style={{ flex: 1, height: 1, background: "var(--line)" }} />
                 </div>
+                */}
 
                 {/* registration form */}
                 <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 13 }}>
