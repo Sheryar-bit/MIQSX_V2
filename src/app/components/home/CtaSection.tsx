@@ -1,7 +1,12 @@
+'use client';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { SP } from './Sparkle';
 
 export default function CtaSection() {
+  const { status } = useSession();
+  const ctaHref = status === 'authenticated' ? '/dashboard' : '/auth/signup';
+
   return (
     <section style={{ padding: 'clamp(40px, 7vh, 90px) clamp(20px, 5vw, 60px) clamp(70px, 11vh, 130px)', maxWidth: '1180px', margin: '0 auto' }}>
       <div data-reveal style={{ position: 'relative', borderRadius: '30px', overflow: 'hidden', padding: 'clamp(40px, 6vw, 80px) clamp(28px, 5vw, 68px)', background: 'var(--olive-deep)', color: 'var(--olive-on)' }}>
@@ -12,7 +17,7 @@ export default function CtaSection() {
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontFamily: "'Newsreader', serif", fontStyle: 'italic', fontSize: '18px', color: 'var(--butter)', marginBottom: '16px' }}><svg width="14" height="14" viewBox="0 0 40 40" fill="var(--butter)"><SP /></svg> Ready when you are</div>
             <h2 style={{ fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: 'clamp(30px, 4.6vw, 60px)', lineHeight: 1.04, letterSpacing: '-0.03em', margin: 0, maxWidth: '15ch' }}>Your brand deserves a system, not a <span style={{ fontFamily: "'Newsreader', serif", fontStyle: 'italic', fontWeight: 500, color: 'var(--butter)' }}>one-off.</span></h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '14px', marginTop: '30px' }}>
-              <Link href="/auth/signup" data-magnetic style={{ textDecoration: 'none', color: 'var(--ink)', background: 'var(--paper)', fontSize: '16px', fontWeight: 600, padding: '15px 30px', borderRadius: '999px', display: 'inline-flex', alignItems: 'center', gap: '9px' }}>Build your brand <span style={{ display: 'inline-flex', width: '22px', height: '22px', borderRadius: '50%', background: 'var(--terra)', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '13px' }}>→</span></Link>
+              <Link href={ctaHref} data-magnetic style={{ textDecoration: 'none', color: 'var(--ink)', background: 'var(--paper)', fontSize: '16px', fontWeight: 600, padding: '15px 30px', borderRadius: '999px', display: 'inline-flex', alignItems: 'center', gap: '9px' }}>Build your brand <span style={{ display: 'inline-flex', width: '22px', height: '22px', borderRadius: '50%', background: 'var(--terra)', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '13px' }}>→</span></Link>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                 <svg width="42" height="32" viewBox="0 0 42 32" fill="none" stroke="var(--butter)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M39 8 C 24 4, 10 8, 5 24"/><path d="M2 16 L6 25 L14 22"/></svg>
                 <span style={{ fontFamily: "'Newsreader', serif", fontStyle: 'italic', fontSize: '16px', color: 'var(--butter)' }}>no card needed</span>

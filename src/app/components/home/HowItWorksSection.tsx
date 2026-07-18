@@ -6,7 +6,7 @@ export default function HowItWorksSection() {
       <div style={{ maxWidth: '760px', marginBottom: 'clamp(40px, 6vh, 66px)' }}>
         <div data-reveal style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontFamily: "'Newsreader', serif", fontStyle: 'italic', fontSize: '19px', color: 'var(--terra)', marginBottom: '14px' }}><svg width="14" height="14" viewBox="0 0 40 40" fill="var(--terra)"><SP /></svg> How it works</div>
         <h2 data-reveal data-reveal-delay="60" style={{ fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: 'clamp(31px, 4.8vw, 58px)', lineHeight: 1.02, letterSpacing: '-0.03em', margin: 0 }}>A loop, not a launch.</h2>
-        <p data-reveal data-reveal-delay="120" style={{ fontFamily: "'Newsreader', serif", fontSize: 'clamp(17px, 1.9vw, 20px)', lineHeight: 1.55, color: 'var(--dim)', margin: '18px 0 0', maxWidth: '54ch' }}>Your brand gets built, pressure-tested, signed off, and a little smarter every single time you use it.</p>
+        <p data-reveal data-reveal-delay="120" style={{ fontFamily: "'Newsreader', serif", fontSize: 'clamp(17px, 1.9vw, 20px)', lineHeight: 1.55, color: 'var(--dim)', margin: '18px 0 0', maxWidth: '54ch' }}>Your brand gets built, pressure tested, signed off, and a little smarter every single time you use it.</p>
       </div>
       <div className="mqsx-loop">
         <div data-reveal className="step step-card" style={{ transform: 'rotate(-1.2deg)' }}>

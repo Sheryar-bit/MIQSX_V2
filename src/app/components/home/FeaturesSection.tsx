@@ -6,7 +6,7 @@ export default function FeaturesSection() {
       <div style={{ maxWidth: '780px', marginBottom: 'clamp(40px, 6vh, 64px)' }}>
         <div data-reveal style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontFamily: "'Newsreader', serif", fontStyle: 'italic', fontSize: '19px', color: 'var(--terra)', marginBottom: '14px' }}><svg width="14" height="14" viewBox="0 0 40 40" fill="var(--terra)"><SP /></svg> Features</div>
         <h2 data-reveal data-reveal-delay="60" style={{ fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: 'clamp(31px, 4.8vw, 58px)', lineHeight: 1.02, letterSpacing: '-0.03em', margin: 0 }}>Generation is easy. <span style={{ fontFamily: "'Newsreader', serif", fontStyle: 'italic', fontWeight: 500, color: 'var(--terra)' }}>Judgment</span> isn&apos;t.</h2>
-        <p data-reveal data-reveal-delay="120" style={{ fontFamily: "'Newsreader', serif", fontSize: 'clamp(17px, 1.9vw, 20px)', lineHeight: 1.55, color: 'var(--dim)', margin: '18px 0 0', maxWidth: '56ch' }}>Anyone can spin up a logo now. MIQSX is the part that decides whether it belongs to your brand — and keeps it that way at scale.</p>
+        <p data-reveal data-reveal-delay="120" style={{ fontFamily: "'Newsreader', serif", fontSize: 'clamp(17px, 1.9vw, 20px)', lineHeight: 1.55, color: 'var(--dim)', margin: '18px 0 0', maxWidth: '56ch' }}>Anyone can spin up a logo now. MIQSX is the part that decides whether it belongs to your brand and keeps it that way at scale.</p>
       </div>
 
       {/* Showcase A */}
@@ -17,7 +17,7 @@ export default function FeaturesSection() {
             <span style={{ fontSize: '11px', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--dim)' }}>The foundation</span>
           </div>
           <h3 style={{ fontFamily: "'Schibsted Grotesk', sans-serif", fontSize: 'clamp(26px, 3.4vw, 40px)', fontWeight: 600, letterSpacing: '-0.025em', lineHeight: 1.04, margin: '0 0 14px' }}>Brand DNA Engine</h3>
-          <p style={{ fontFamily: "'Newsreader', serif", fontSize: 'clamp(16px, 1.8vw, 19px)', lineHeight: 1.6, color: 'var(--dim)', margin: '0 0 20px', maxWidth: '44ch' }}>One living source of truth — voice, palette, type, audience, do&apos;s and don&apos;ts. Every other feature reads from it, so consistency isn&apos;t a checklist; it&apos;s simply the default.</p>
+          <p style={{ fontFamily: "'Newsreader', serif", fontSize: 'clamp(16px, 1.8vw, 19px)', lineHeight: 1.6, color: 'var(--dim)', margin: '0 0 20px', maxWidth: '44ch' }}>One living source of truth voice, palette, type, audience, do&apos;s and don&apos;ts. Every other feature reads from it, so consistency isn&apos;t a checklist; it&apos;s simply the default.</p>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {['voice', 'palette', 'type', 'rules'].map(t => <span key={t} style={{ fontSize: '13px', padding: '7px 13px', borderRadius: '999px', border: '1px solid var(--border)', color: 'var(--ink)' }}>{t}</span>)}
           </div>
@@ -33,7 +33,7 @@ export default function FeaturesSection() {
             <div style={{ display: 'flex', gap: '7px', marginBottom: '16px' }}>
               {['var(--terra)', 'var(--butter)', 'var(--peri)', 'var(--olive)'].map((bg, i) => <span key={i} style={{ flex: 1, height: '34px', borderRadius: '8px', background: bg }}></span>)}
             </div>
-            <div style={{ fontFamily: "'Newsreader', serif", fontStyle: 'italic', fontSize: '14px', color: 'var(--dim)', marginBottom: '16px' }}>Voice — warm, direct, a little playful.</div>
+            <div style={{ fontFamily: "'Newsreader', serif", fontStyle: 'italic', fontSize: '14px', color: 'var(--dim)', marginBottom: '16px' }}>Voice warm, direct, a little playful.</div>
             <div style={{ borderTop: '1px solid var(--line)', paddingTop: '14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                 <span style={{ fontSize: '11px', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--dim)' }}>Consistency</span>
@@ -56,7 +56,7 @@ export default function FeaturesSection() {
             <span style={{ fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: '17px', color: 'var(--terra)' }}>0–100</span>
           </div>
           <h3 style={{ fontFamily: "'Schibsted Grotesk', sans-serif", fontSize: '21px', fontWeight: 600, letterSpacing: '-0.02em', margin: '6px 0 0' }}>Brand Guardian</h3>
-          <p style={{ fontSize: '14px', lineHeight: 1.55, color: 'var(--dim)', margin: 0 }}>Scores every asset against your DNA and tells you exactly what&apos;s off — before it ships.</p>
+          <p style={{ fontSize: '14px', lineHeight: 1.55, color: 'var(--dim)', margin: 0 }}>Scores every asset against your DNA and tells you exactly what&apos;s off before it ships.</p>
         </div>
         <div data-reveal data-reveal-delay="90" className="trio-card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -64,7 +64,7 @@ export default function FeaturesSection() {
             <span style={{ fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: '15px', color: 'var(--peri-on)' }}>EN·<span style={{ fontFamily: "'Newsreader', serif" }}>اردو</span></span>
           </div>
           <h3 style={{ fontFamily: "'Schibsted Grotesk', sans-serif", fontSize: '21px', fontWeight: 600, letterSpacing: '-0.02em', margin: '6px 0 0' }}>Trilingual captions</h3>
-          <p style={{ fontSize: '14px', lineHeight: 1.55, color: 'var(--dim)', margin: 0 }}>English, Urdu and Roman Urdu — not translated, actually written natively for each.</p>
+          <p style={{ fontSize: '14px', lineHeight: 1.55, color: 'var(--dim)', margin: 0 }}>English, Urdu and Roman Urdu not translated, actually written natively for each.</p>
         </div>
         <div data-reveal data-reveal-delay="180" className="trio-card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -72,7 +72,7 @@ export default function FeaturesSection() {
             <span style={{ fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: '17px', color: 'var(--butter-on)' }}>×12</span>
           </div>
           <h3 style={{ fontFamily: "'Schibsted Grotesk', sans-serif", fontSize: '21px', fontWeight: 600, letterSpacing: '-0.02em', margin: '6px 0 0' }}>AI Focus Group</h3>
-          <p style={{ fontSize: '14px', lineHeight: 1.55, color: 'var(--dim)', margin: 0 }}>Test concepts on synthetic personas that sound like your real audience — before ad spend.</p>
+          <p style={{ fontSize: '14px', lineHeight: 1.55, color: 'var(--dim)', margin: 0 }}>Test concepts on synthetic personas that sound like your real audience before ad spend.</p>
         </div>
       </div>
 
@@ -80,7 +80,7 @@ export default function FeaturesSection() {
       <div data-reveal className="mqsx-show rev" style={{ marginBottom: 'clamp(20px, 3vw, 32px)' }}>
         <div style={{ position: 'relative', borderRadius: '24px', background: 'var(--olive-deep)', padding: 'clamp(26px, 3vw, 40px)', overflow: 'hidden', minHeight: '290px', display: 'flex', alignItems: 'center' }}>
           <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '11px', width: '100%', maxWidth: '360px', margin: '0 auto' }}>
-            <div style={{ alignSelf: 'flex-end', maxWidth: '86%', background: '#25D366', color: '#062b14', padding: '12px 15px', borderRadius: '15px 15px 4px 15px', fontSize: '14px', fontWeight: 500 }}>Eid campaign — 3 posts ready for review 🌙</div>
+            <div style={{ alignSelf: 'flex-end', maxWidth: '86%', background: '#25D366', color: '#062b14', padding: '12px 15px', borderRadius: '15px 15px 4px 15px', fontSize: '14px', fontWeight: 500 }}>Eid campaign 3 posts ready for review 🌙</div>
             <div style={{ alignSelf: 'flex-start', maxWidth: '86%', background: 'rgba(255,255,255,0.12)', color: 'var(--olive-on)', padding: '12px 15px', borderRadius: '15px 15px 15px 4px', fontSize: '14px' }}>Approved! These look perfect 👍</div>
             <div style={{ alignSelf: 'flex-end', maxWidth: '86%', background: '#25D366', color: '#062b14', padding: '12px 15px', borderRadius: '15px 15px 4px 15px', fontSize: '14px', fontWeight: 500 }}>Logged ✓ Brand just got smarter</div>
             <div style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: '7px', fontSize: '12px', color: 'var(--olive-on)', opacity: .7, paddingLeft: '4px' }}><span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--butter)' }}></span>Synced to Brand DNA</div>
@@ -93,7 +93,7 @@ export default function FeaturesSection() {
             <span style={{ fontSize: '11px', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--dim)' }}>The workflow</span>
           </div>
           <h3 style={{ fontFamily: "'Schibsted Grotesk', sans-serif", fontSize: 'clamp(26px, 3.4vw, 40px)', fontWeight: 600, letterSpacing: '-0.025em', lineHeight: 1.04, margin: '0 0 14px' }}>Sign-off on <span style={{ color: '#1faa52' }}>WhatsApp</span></h3>
-          <p style={{ fontFamily: "'Newsreader', serif", fontSize: 'clamp(16px, 1.8vw, 19px)', lineHeight: 1.6, color: 'var(--dim)', margin: '0 0 20px', maxWidth: '44ch' }}>Reviews happen where your clients already are. Send for approval, get a yes, and the brand learns from every decision — no portals, no chasing.</p>
+          <p style={{ fontFamily: "'Newsreader', serif", fontSize: 'clamp(16px, 1.8vw, 19px)', lineHeight: 1.6, color: 'var(--dim)', margin: '0 0 20px', maxWidth: '44ch' }}>Reviews happen where your clients already are. Send for approval, get a yes, and the brand learns from every decision no portals, no chasing.</p>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {['Team review', 'Client approval', 'Auto-logged'].map(t => <span key={t} style={{ fontSize: '13px', padding: '7px 13px', borderRadius: '999px', border: '1px solid var(--border)' }}>{t}</span>)}
           </div>

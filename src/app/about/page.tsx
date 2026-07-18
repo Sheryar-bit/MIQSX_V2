@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { useTheme } from '../hooks/useTheme';
 import './about.css';
 import SharedNav from '../components/SharedNav';
@@ -8,6 +9,8 @@ import MarketingFooter from '../components/MarketingFooter';
 
 export default function AboutPage() {
   const [dark, setDark] = useTheme();
+  const { status } = useSession();
+  const ctaHref = status === 'authenticated' ? '/dashboard' : '/auth/signup';
 
   useEffect(() => {
     document.querySelectorAll('[data-draw]').forEach(p => {
@@ -215,7 +218,7 @@ export default function AboutPage() {
               We&apos;re not making logos.{' '}
               <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: 'italic', fontWeight: 400, color: 'var(--sig)' }}>We&apos;re giving brands a brain.</span>
             </h2>
-            <Link href="/auth/signup" data-magnetic style={{ position: 'relative', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 14, padding: '14px 14px 14px 28px', borderRadius: 999, background: 'var(--sig)', color: 'var(--onSig)', fontFamily: "'General Sans', sans-serif", fontWeight: 600, fontSize: 18 }}>
+            <Link href={ctaHref} data-magnetic style={{ position: 'relative', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 14, padding: '14px 14px 14px 28px', borderRadius: 999, background: 'var(--sig)', color: 'var(--onSig)', fontFamily: "'General Sans', sans-serif", fontWeight: 600, fontSize: 18 }}>
               <span data-mag-inner style={{ display: 'inline-flex', alignItems: 'center', gap: 14 }}>
                 Build your brand
                 <span style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--onSig)', color: 'var(--sig)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>

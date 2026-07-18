@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { useTheme } from '../hooks/useTheme';
 import './features.css';
 import SharedNav from '../components/SharedNav';
@@ -19,6 +20,8 @@ const FONTS = ["'General Sans'", "'Newsreader', serif", "'General Sans'"];
 
 export default function FeaturesPage() {
   const [dark, setDark] = useTheme();
+  const { status } = useSession();
+  const ctaHref = status === 'authenticated' ? '/dashboard' : '/auth/signup';
   const [langIdx, setLangIdx] = useState(0);
   const langLoopRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -470,7 +473,7 @@ export default function FeaturesPage() {
           <svg aria-hidden="true" width="26" height="26" viewBox="0 0 40 40" fill="var(--terra)" style={{ position:'absolute', left:'13%', top:'20%', animation:'fx-twinkle 3.6s ease-in-out infinite' }}><path d="M20 0c3 13 7 17 20 20-13 3-17 7-20 20-3-13-7-17-20-20C13 17 17 13 20 0Z"/></svg>
           <h2 data-reveal style={{ fontFamily:"'General Sans'", fontWeight:600, fontSize:'clamp(36px, 6vw, 84px)', lineHeight:1.0, letterSpacing:'-0.035em', margin:'0 auto', maxWidth:'16ch' }}>Generation is easy. <span style={{ fontFamily:"'Instrument Serif', serif", fontStyle:'italic', fontWeight:400, color:'var(--sig)' }}>Judgment isn&apos;t.</span></h2>
           <div data-reveal style={{ display:'flex', flexWrap:'wrap', gap:'14px', justifyContent:'center', marginTop:'38px' }}>
-            <Link href="/auth/signup" style={{ textDecoration:'none', color:'var(--onSig)', background:'var(--sig)', fontWeight:600, fontSize:'17px', padding:'16px 30px', borderRadius:'999px', display:'inline-flex', alignItems:'center', gap:'9px' }}>Build your brand <span>↗</span></Link>
+            <Link href={ctaHref} style={{ textDecoration:'none', color:'var(--onSig)', background:'var(--sig)', fontWeight:600, fontSize:'17px', padding:'16px 30px', borderRadius:'999px', display:'inline-flex', alignItems:'center', gap:'9px' }}>Build your brand <span>↗</span></Link>
             <Link href="/gallery" style={{ textDecoration:'none', color:'var(--ink)', fontWeight:600, fontSize:'17px', padding:'16px 8px', display:'inline-flex', alignItems:'center', gap:'8px' }}>See the gallery <span style={{ color:'var(--terra)' }}>↓</span></Link>
           </div>
         </section>

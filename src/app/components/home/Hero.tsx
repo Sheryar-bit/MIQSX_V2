@@ -1,12 +1,16 @@
 'use client';
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { SP } from './Sparkle';
 
 const MARQUEE_SEG = 'BRAND DNA · CONSISTENCY · URDU + ENGLISH · ONE SYSTEM · ';
 const MARQUEE = MARQUEE_SEG.repeat(4);
 
 export default function Hero() {
+  const { status } = useSession();
+  const ctaHref = status === 'authenticated' ? '/dashboard' : '/auth/signup';
+
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const E = 'cubic-bezier(.2,.7,.2,1)';
@@ -124,7 +128,7 @@ export default function Hero() {
           </div>
 
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 'clamp(20px, 4vw, 56px)', flexWrap: 'wrap', marginTop: 'clamp(30px, 5vh, 52px)' }}>
-            <Link href="/auth/signup" data-fade data-magnetic style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '16px', padding: '11px 11px 11px 28px', borderRadius: '999px', border: 'none', background: 'var(--sig)', color: 'var(--onSig)', fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: 'clamp(16px, 1.5vw, 19px)', cursor: 'pointer', textDecoration: 'none' }}>
+            <Link href={ctaHref} data-fade data-magnetic style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '16px', padding: '11px 11px 11px 28px', borderRadius: '999px', border: 'none', background: 'var(--sig)', color: 'var(--onSig)', fontFamily: "'Schibsted Grotesk', sans-serif", fontWeight: 600, fontSize: 'clamp(16px, 1.5vw, 19px)', cursor: 'pointer', textDecoration: 'none' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '16px' }}>Build your brand
                 <span style={{ width: '46px', height: '46px', borderRadius: '50%', background: 'var(--onSig)', color: 'var(--sig)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>

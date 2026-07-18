@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { SP } from './Sparkle';
 
 const FAQ_DATA = [
-  { q: 'Can I use generated assets commercially?', a: 'Yes. Everything MIQSX produces from your Brand DNA is yours to use across client work, ads, and social — on Pro and Agency with no extra licensing.' },
+  { q: 'Can I use generated assets commercially?', a: 'Yes. Everything MIQSX produces from your Brand DNA is yours to use across client work, ads, and social on Pro and Agency with no extra licensing.' },
   { q: 'Which languages does MIQSX speak?', a: 'English, Urdu, and Roman Urdu out of the box. Captions and copy are generated natively in all three, with a cultural check so nothing lands wrong.' },
-  { q: 'How big a team can I add?', a: 'Free is solo. Pro covers up to 3 seats. Agency is built for studios — unlimited reviewers and client approval over WhatsApp.' },
+  { q: 'How big a team can I add?', a: 'Free is solo. Pro covers up to 3 seats. Agency is built for studios unlimited reviewers and client approval over WhatsApp.' },
   { q: 'What are the limits on the free tier?', a: 'One Brand DNA, 30 generated assets a month, and the full Guardian scoring so you can feel the workflow before you commit.' },
   { q: 'Does the brand really learn from feedback?', a: 'Every approval and rejection is logged against your Brand DNA. Over time the system internalises your taste and the off-brand suggestions stop appearing.' },
 ];
