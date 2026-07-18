@@ -35,7 +35,16 @@ const nextConfig: NextConfig = {
   // Pin the workspace root so Next doesn't walk up into OneDrive / the home
   // directory (an orphaned package-lock.json lives in C:\Users\alish).
   outputFileTracingRoot: path.join(__dirname),
-  serverExternalPackages: ["mongoose", "node-vibrant"],
+  // sharp must stay external so its native linux-x64 + libvips binaries
+  // are loaded from node_modules on Vercel (not broken by bundling).
+  serverExternalPackages: ["mongoose", "node-vibrant", "sharp"],
+  // Ensure @img/sharp-* platform packages are traced into the serverless bundle.
+  outputFileTracingIncludes: {
+    "/api/**/*": [
+      "./node_modules/sharp/**/*",
+      "./node_modules/@img/**/*",
+    ],
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
